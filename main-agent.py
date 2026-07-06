@@ -2,6 +2,7 @@ import concurrent.futures
 import importlib
 import inspect
 import json
+import time
 
 from openai import OpenAI
 from typing import Dict, Any, List
@@ -37,6 +38,48 @@ def auto_load_tool_functions(tools_dir: str = "tools") -> dict:
             except Exception as e:
                 print(f"加载模块 {module_name} 时发生错误: {str(e)}")
     return registry
+
+def execute_tool(tool_call):
+    f_name = tool_call.function.name
+    f_id = tool_call.id
+
+    is_success = True
+
+    try:
+        f_args = json.loads(tool_call.function.arguments)
+    except Exception as json_error:
+        error_json_content = f"大模型生成参数不是有效的JSON格式: {str(json_error)}"
+        return {
+            "result_dict": {
+                "role": "tool",
+                "tool_call_id": f_id,
+                "name": f_name,
+                "content": error_json_content
+            },
+            "is_success": False
+        }
+
+    if f_name in available_tools:
+        tool_function = available_tools[f_name]
+        try:
+            res = tool_function(**f_args)
+            if "错误" in str(res) or "failed" in str(res).lower():
+                is_success = False
+        except Exception as script_error:
+            res = f"工具执行失败: {str(script_error)}"
+            is_success = False
+    else:
+        res = f"工具 {f_name} 不可用"
+        is_success = False
+    return {
+        "result_dict": {
+            "role": "tool",
+            "tool_call_id": f_id,
+            "name": f_name,
+            "content": str(res)
+        },
+        "is_success": is_success
+    }
 
 tools_config = load_tools_config("tool_configure.json")
 available_tools = auto_load_tool_functions("tools")
@@ -82,7 +125,7 @@ if __name__ == "__main__":
         {"role": "system", "content": "你是一个智能助手，能够根据用户的请求调用工具并提供有用的信息。"}
     ]
 
-    max_turns = 20
+    max_turns = 30
 
     while True:
         user_input = input("User: ")
@@ -93,8 +136,12 @@ if __name__ == "__main__":
 
         messages.append({"role": "user", "content": user_input})
 
-        for turn in range(max_turns):
-            print(f"正在思考 第 {turn + 1} 轮...")
+        turn = 0
+        consecutive_errors = 0
+
+        while turn < max_turns:
+            turn += 1
+            print(f"正在思考 第 {turn} 轮...")
 
             LLM_response = LLM.generate(
                 messages=messages,
@@ -111,33 +158,33 @@ if __name__ == "__main__":
                 print("大语言模型请求调用工具...")
                 print(f"大语言模型自动调用了{len(LLM_response.tool_calls)}个工具。")
 
-                def execute_single_tool(tool_call):
-                    f_name = tool_call.function.name
-                    f_args = json.loads(tool_call.function.arguments)
-                    f_id = tool_call.id
-
-                    if f_name in available_tools:
-                        tool_function = available_tools[f_name]
-                        try:
-                            res = tool_function(**f_args)
-                        except Exception as script_error:
-                            res = f"工具执行失败: {str(script_error)}"
-                    else:
-                        res = f"工具 {f_name} 不可用"
-                    return {
-                        "role": "tool",
-                        "tool_call_id": f_id,
-                        "name": f_name,
-                        "content": str(res)
-                    }
-
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    futures = [executor.submit(execute_single_tool, tool_call) for tool_call in LLM_response.tool_calls]
+                    futures = [executor.submit(execute_tool, tool_call) for tool_call in LLM_response.tool_calls]
                     tool_results = [future.result() for future in concurrent.futures.as_completed(futures)]
-                for result in tool_results:
-                    print(f"工具调用结果: {result['content']}")
+
+                for output in tool_results:
+                    result = output["result_dict"]
+                    print(f"工具调用结果: {result['name']} - {result['content']}")
                     messages.append(result)
+
+                    if not output["is_success"]:
+                        consecutive_errors += 1
+                    else:
+                        consecutive_errors = 0
+
+                if consecutive_errors >= 3:
+                    print("检测到底层工具连续发生严重错误，任务判定为‘不可解决’。强制要求模型进行最终复盘说明...")
+                    messages.append({
+                        "role": "user",
+                        "content": "系统提示：底层执行工具链持续返回错误或无结果。请不要再尝试调用任何工具，直接基于现状向用户回复说明任务为何无法完成。"
+                    })
+                    break
+
+                time.sleep(0.5)
                 continue
             else:
                 print(f"AI助手: {LLM_response.content}")
                 break
+        else:
+            print(f"达到单次对话最大轮数({max_turns}轮)，结束本次对话。")
+            break
