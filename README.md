@@ -27,9 +27,9 @@
 | 能力 | 说明 | 示例指令 |
 |------|------|---------|
 | 🌤️ **天气查询** | 实时获取任意城市的天气信息 | _"北京今天天气怎么样？"_ |
-| 🗺️ **旅游推荐** | 根据天气情况搜索景点与活动推荐 | _"北京下雨了，有什么好玩的？"_ |
-| 📂 **文件操作** | 列出目录、读写代码文件 | _"读取 main-agent.py 的内容"_ |
-| 📝 **Word 文档** | 创建/编辑文档，添加段落、标题、表格、分页符，设置格式 | _"创建一个项目报告文档"_ |
+| 🗺️ **旅游推荐** | 根据天气情况联网搜索景点与活动推荐 | _"北京下雨了，有什么好玩的？"_ |
+| 📂 **文件操作** | 列出目录树、读写代码文件（UTF-8，自动截断过长内容） | _"读取 main-agent.py 的内容"_ |
+| 📝 **Word 文档** | 创建/编辑文档，添加段落、标题、表格、分页符，设置字体与段落格式 | _"创建一个项目报告文档"_ |
 
 ---
 
@@ -52,6 +52,7 @@
 - **并行执行**：多工具调用使用 `ThreadPoolExecutor` 并发执行，提升响应速度
 - **标准协议**：工具定义遵循 OpenAI Function Calling 规范，兼容 DeepSeek / GPT 等模型
 - **容错处理**：工具执行失败不会中断主流程，返回错误信息供模型继续决策
+- **连续错误熔断**：工具连续失败 3 次后自动终止工具链，强制模型给出最终回复，避免死循环
 
 ---
 
@@ -61,32 +62,32 @@
 
 | 函数名 | 功能 |
 |--------|------|
-| `get_weather(city)` | 调用 wttr.in API 获取城市实时天气（温度、湿度、风速） |
+| `get_weather(city)` | 调用 wttr.in API 获取城市实时天气（温度、湿度、风速），支持 HTTP 代理 |
 | `get_attraction(city, weather)` | 通过 Tavily 搜索引擎推荐适应当前天气的景点和活动 |
 
 ### 📂 代码工具（`code_tool.py`）
 
 | 函数名 | 功能 |
 |--------|------|
-| `list_project_files(dir_path)` | 递归列出目录树（过滤 `.git` / `__pycache__` 等） |
-| `read_code_file(file_path)` | 读取文件内容并显示行号（UTF-8，自动截断过长内容） |
+| `list_project_files(dir_path)` | 递归列出目录树（自动过滤 `.git` / `__pycache__` / `.venv` 等目录，最多显示 150 个文件） |
+| `read_code_file(file_path)` | 读取文件内容并显示行号（UTF-8，超过 15000 字符自动截断） |
 | `write_code_file(file_path, content)` | 写入内容到文件（自动创建父目录） |
 
 ### 📝 Word 工具（`word_tool.py`）
 
 | 函数名 | 功能 |
 |--------|------|
-| `create_word_document(file_path, title)` | 创建空白 Word 文档 |
-| `add_paragraph(...)` | 添加段落，支持字体、字号、颜色、对齐、行距、缩进等 |
-| `add_heading(text, level)` | 添加 1~9 级标题 |
-| `add_table(data, headers)` | 添加带边框的表格 |
-| `add_page_break()` | 添加分页符 |
-| `read_word_text(file_path)` | 读取文档纯文本（带段落编号与样式） |
+| `create_word_document(file_path, title)` | 创建空白 Word 文档，可选居中标题 |
+| `add_paragraph(file_path, text, style, font_name, font_size, bold, italic, underline, color, alignment, line_spacing, space_before, space_after, first_line_indent)` | 添加段落，支持完整的字体格式和段落排版设置 |
+| `add_heading(file_path, text, level, font_name, font_size, color, alignment)` | 添加 1~9 级标题，支持自定义字体、字号、颜色和对齐 |
+| `add_table(file_path, data, headers, font_name, font_size, bold_header, alignment)` | 添加带边框的表格（Table Grid 样式） |
+| `add_page_break(file_path)` | 添加分页符 |
+| `read_word_text(file_path)` | 读取文档纯文本（带段落编号与样式名称） |
 | `read_word_tables(file_path)` | 提取文档中的所有表格数据 |
 | `read_word_info(file_path)` | 获取文档概要信息（段落数、表格数、样式列表） |
-| `set_paragraph_format(...)` | 调整段落排版格式 |
-| `set_run_format(...)` | 调整字体格式 |
-| `set_page_margins(...)` | 设置页面边距 |
+| `set_paragraph_format(file_path, paragraph_index, alignment, line_spacing, space_before, space_after, first_line_indent, left_indent, right_indent)` | 调整段落排版格式，可指定单个段落或全部段落 |
+| `set_run_format(file_path, paragraph_index, font_name, font_size, bold, italic, underline, color)` | 调整指定段落的字体格式 |
+| `set_page_margins(file_path, top, bottom, left, right)` | 设置页面边距（单位：英寸） |
 | `list_doc_styles(file_path)` | 列出文档中所有可用样式 |
 
 ---
@@ -105,19 +106,29 @@ pip install openai requests tavily-python python-docx
 
 ### 配置
 
-在 `main-agent.py` 中填写以下参数：
+本项目通过**环境变量**完成配置，支持以下参数：
 
-```python
-# ===== LLM 配置 =====
-API_KEY = "your-api-key"                      # 大模型 API 密钥
-BASE_URL = "https://api.deepseek.com"          # API 服务地址
-MODEL_ID = "deepseek-v4-flash"                 # 模型名称
+```bash
+# ===== LLM 配置（必填）=====
+export DEEPSEEK_API_KEY="your-api-key"        # 大模型 API 密钥
 
-# ===== 搜索引擎配置 =====
-os.environ['TAVILY_API_KEY'] = "your-tavily-api-key"   # Tavily 搜索 API
+# ===== 搜索引擎配置（旅游推荐功能需要）=====
+export TAVILY_API_KEY="your-tavily-api-key"   # Tavily 搜索 API
+
+# ===== 代理配置（可选，适用于受限网络环境）=====
+export HTTP_PROXY="http://127.0.0.1:7890"     # HTTP 代理
+export HTTPS_PROXY="http://127.0.0.1:7890"    # HTTPS 代理
 ```
 
-> 💡 支持任何兼容 OpenAI API 格式的大模型（DeepSeek、GPT、Claude 等）。
+也可以在 `main-agent.py` 中直接修改默认值（不推荐）：
+
+```python
+API_KEY = os.environ.get("DEEPSEEK_API_KEY")   # 优先读取环境变量
+BASE_URL = "https://api.deepseek.com"           # API 服务地址
+MODEL_ID = "deepseek-v4-flash"                  # 模型名称
+```
+
+> 💡 系统支持任何兼容 OpenAI API 格式的大模型（DeepSeek、GPT、Claude 等），只需修改 `BASE_URL` 和 `MODEL_ID` 即可切换。
 
 ### 运行
 
@@ -159,9 +170,14 @@ def my_custom_function(param1: str, param2: int) -> str:
 
 当用户请求需要多个工具协作时（如"查询北京的天气并推荐景点"），系统会自动并发调用，显著提升效率。
 
-### 多轮对话
+### 多轮对话与熔断机制
 
-支持最多 20 轮的自动工具调用链，模型会根据工具返回结果自主判断是否需要继续调用。
+- 支持最多 **30 轮** 自动工具调用链，模型会根据工具返回结果自主判断是否需要继续调用
+- 当工具**连续失败 3 次**时，系统自动触发熔断机制，强制模型停止工具调用、直接向用户说明任务为何无法完成
+
+### 网络代理支持
+
+在受限网络环境下，可通过设置 `HTTP_PROXY` / `HTTPS_PROXY` 环境变量使天气查询等 HTTP 请求正常通行。
 
 ---
 
