@@ -7,6 +7,7 @@
     <img src="https://img.shields.io/badge/Python-3.8%2B-blue?style=flat&logo=python" alt="Python">
     <img src="https://img.shields.io/badge/LLM-DeepSeek%20%7C%20OpenAI-brightgreen" alt="LLM">
     <img src="https://img.shields.io/badge/Tavily-Search-orange?style=flat" alt="Tavily">
+    <img src="https://img.shields.io/badge/OCR-PaddleOCR%20%7C%20Tesseract-blueviolet" alt="OCR">
     <img src="https://img.shields.io/badge/Word-python--docx-green" alt="python-docx">
     <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
   </p>
@@ -16,7 +17,7 @@
 
 ## 📋 项目简介
 
-**Easy Agents** 是一个基于大语言模型（LLM）的轻量级智能体（Agent）框架。用户只需输入**自然语言指令**，系统便会自动理解意图、规划任务、调用工具并返回结果。支持天气查询、旅游推荐、代码文件操作、Word 文档自动化等功能，开箱即用。
+**Easy Agents** 是一个基于大语言模型（LLM）的轻量级智能体（Agent）框架。用户只需输入**自然语言指令**，系统便会自动理解意图、规划任务、调用工具并返回结果。支持天气查询、旅游推荐、代码文件操作、Word 文档自动化、图片 OCR 文字识别等功能，开箱即用。
 
 > 💡 **核心理念**：让大模型成为你的"智能助手"，通过工具调用连接真实世界。
 
@@ -30,6 +31,7 @@
 | 🗺️ **旅游推荐** | 根据天气情况联网搜索景点与活动推荐 | _"北京下雨了，有什么好玩的？"_ |
 | 📂 **文件操作** | 列出目录树、读写代码文件（UTF-8，自动截断过长内容） | _"读取 main-agent.py 的内容"_ |
 | 📝 **Word 文档** | 创建/编辑文档，添加段落、标题、表格、分页符，设置字体与段落格式 | _"创建一个项目报告文档"_ |
+| 🖼️ **图片 OCR** | 识别图片中的文字（支持中文/英文/数字），读取图片基本信息 | _"识别这张图片中的文字"_ |
 
 ---
 
@@ -39,11 +41,15 @@
 .
 ├── main-agent.py              # 🧠 主程序入口（LLM对话循环 + 工具调度）
 ├── tool_configure.json        # ⚙️ 工具函数定义（OpenAI Tool 格式）
+├── README.md                  # 📖 项目说明
 ├── tools/                     # 🔧 工具模块目录（自动加载）
-│   ├── travel_tool.py         #   ├── 天气查询 & 旅游推荐
-│   ├── code_tool.py           #   ├── 代码 / 文件操作
-│   └── word_tool.py           #   └── Word 文档生成与格式编辑
-└── README.md                  # 📖 项目说明
+│   ├── travel_tool.py         #   ├── 🌤️ 天气查询 & 旅游推荐
+│   ├── code_tool.py           #   ├── 📂 代码 / 文件操作
+│   ├── word_tool.py           #   ├── 📝 Word 文档生成与格式编辑
+│   └── image_tool.py          #   └── 🖼️ 图片 OCR 识别与信息提取
+└── 培训会议流程图.docx         # 📄 示例文档：培训会议流程图
+└── 培训会议流程图说明.docx     # 📄 示例文档：流程图说明
+└── 培训会议流程图.jpg          # 🖼️ 示例图片：培训会议流程图
 ```
 
 ### 架构亮点
@@ -73,6 +79,13 @@
 | `read_code_file(file_path)` | 读取文件内容并显示行号（UTF-8，超过 15000 字符自动截断） |
 | `write_code_file(file_path, content)` | 写入内容到文件（自动创建父目录） |
 
+### 🖼️ 图片工具（`image_tool.py`）
+
+| 函数名 | 功能 |
+|--------|------|
+| `read_image_text(file_path, lang)` | 识别图片中的文字（OCR），支持中英文混合识别，自动切换 pytesseract / PaddleOCR 引擎 |
+| `read_image_info(file_path)` | 读取图片基本信息（尺寸、格式、颜色模式、文件大小、EXIF 拍摄信息摘要等） |
+
 ### 📝 Word 工具（`word_tool.py`）
 
 | 函数名 | 功能 |
@@ -97,12 +110,28 @@
 ### 环境要求
 
 - Python 3.8+
-- 依赖库：`openai`, `requests`, `tavily-python`, `python-docx`
+- 依赖库：`openai`, `requests`, `tavily-python`, `python-docx`, `Pillow`
 
 ```bash
-# 安装依赖
-pip install openai requests tavily-python python-docx
+# 安装基础依赖
+pip install openai requests tavily-python python-docx Pillow
 ```
+
+### OCR 引擎安装（可选，图片识别需要）
+
+```bash
+# 方案一：pytesseract（经典稳定，系统级）
+pip install pytesseract
+# 然后安装 Tesseract OCR 引擎：
+#   - Windows: https://github.com/UB-Mannheim/tesseract/wiki
+#   - macOS: brew install tesseract
+#   - Ubuntu: sudo apt install tesseract-ocr tesseract-ocr-chi-sim
+
+# 方案二：PaddleOCR（纯 Python，中文效果好）
+pip install paddlepaddle paddleocr
+```
+
+> 💡 两种 OCR 引擎任选其一即可。系统会自动检测可用引擎，优先使用 pytesseract。
 
 ### 配置
 
@@ -148,6 +177,13 @@ User: 北京下雨了，推荐一些室内的景点
 User: 创建一个Word文档，标题为"我的旅游计划"
 🤖 → ✓ Word 文档已创建: '我的旅游计划.docx'
 
+User: 识别这张图片中的文字
+🤖 → ━━━ OCR 识别结果 ━━━
+      文件: 培训会议流程图.jpg
+      识别引擎: pytesseract
+      识别文本行数: 15
+      ...
+
 输入 exit 或 quit 退出程序。
 ```
 
@@ -170,6 +206,10 @@ def my_custom_function(param1: str, param2: int) -> str:
 
 当用户请求需要多个工具协作时（如"查询北京的天气并推荐景点"），系统会自动并发调用，显著提升效率。
 
+### 双引擎 OCR 自动切换
+
+图片文字识别功能支持 **pytesseract** 和 **PaddleOCR** 两种引擎，系统会自动检测并优先使用 pytesseract（失败时自动降级到 PaddleOCR），无需手动配置。
+
 ### 多轮对话与熔断机制
 
 - 支持最多 **30 轮** 自动工具调用链，模型会根据工具返回结果自主判断是否需要继续调用
@@ -189,6 +229,9 @@ def my_custom_function(param1: str, param2: int) -> str:
 | `requests` | 发送 HTTP 请求获取天气数据 |
 | `tavily-python` | 联网搜索旅游景点推荐 |
 | `python-docx` | 创建和编辑 Word 文档 |
+| `Pillow` | 图片处理（打开、读取格式/尺寸/EXIF 等） |
+| `pytesseract`（可选） | OCR 文字识别引擎（方案一） |
+| `paddlepaddle` + `paddleocr`（可选） | OCR 文字识别引擎（方案二，中文效果更优） |
 
 ---
 
