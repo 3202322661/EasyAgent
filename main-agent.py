@@ -67,10 +67,8 @@ class OpenAICompatibleClient:
             print(f"[ERROR] 调用大语言模型API时发生错误: {e} ")
             return None
 
-os.environ['TAVILY_API_KEY'] = "YOUR_TAVILY_API_KEY"  # 请替换为你的实际Tavily API Key
-
 if __name__ == "__main__":
-    API_KEY = "YOUR_API_KEY"  # 请替换为你的实际API Key
+    API_KEY = os.environ.get("DEEPSEEK_API_KEY")  # 请替换为你的实际API Key
     BASE_URL = "https://api.deepseek.com"
     MODEL_ID = "deepseek-v4-flash"
 
