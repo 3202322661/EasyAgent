@@ -501,5 +501,45 @@
         "required": ["file_path"]
       }
     }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "read_image_text",
+      "description": "【核心功能】识别图片中的文字内容（OCR），支持中文、英文、数字等印刷体文字。适用于：扫描文档截图中的文字提取、图片中的表格/图表文字识别、路牌菜单名片等实拍图片的文字识别。返回识别的文本内容及统计信息。需要安装 pytesseract 或 PaddleOCR 才能使用。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "图片文件路径，支持 .png、.jpg、.jpeg、.gif、.bmp、.webp、.tiff 等格式"
+          },
+          "lang": {
+            "type": "string",
+            "description": "OCR识别语言，默认 'chi_sim+eng'（中文简体+英文）。常用值：'eng'（仅英文）、'chi_sim'（仅中文简体）、'chi_sim+eng'（中英混合）"
+          }
+        },
+        "required": ["file_path"]
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "read_image_info",
+      "description": "读取图片文件的基本信息（尺寸、格式、颜色模式、文件大小、GIF帧数、EXIF拍摄信息摘要等）。适用于快速了解图片的基础属性，辅助OCR识别结果的解读。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "图片文件路径，支持 .png、.jpg、.jpeg、.gif、.bmp、.webp、.tiff 等格式"
+          }
+        },
+        "required": ["file_path"]
+      }
+    }
   }
 ]

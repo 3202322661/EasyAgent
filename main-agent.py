@@ -115,6 +115,9 @@ if __name__ == "__main__":
     BASE_URL = "https://api.deepseek.com"
     MODEL_ID = "deepseek-v4-flash"
 
+    os.environ['PADDLE_PDX_HOME'] = r"E:\PythonProject\Hello-Agents\.paddlex"
+    os.environ['PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK'] = "True"
+
     LLM = OpenAICompatibleClient(
         model = MODEL_ID,
         base_url = BASE_URL,
