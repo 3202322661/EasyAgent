@@ -123,7 +123,6 @@ def _ocr_with_paddleocr(file_path: str, lang: str) -> str | None:
         conf_count = 0
 
         for line in result[0]:
-            bbox = line[0]
             text = line[1][0]
             confidence = line[1][1]
 
