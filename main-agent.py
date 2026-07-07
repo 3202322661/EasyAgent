@@ -137,6 +137,24 @@ if __name__ == "__main__":
             print("Exiting...")
             break
 
+        purified_messages = []
+        for msg in messages:
+            if msg.get("role") in ["system","user"]:
+                purified_messages.append(msg)
+            elif msg.get("role") == "assistant" and not hasattr(msg, 'tool_calls') and getattr(msg, 'content', None):
+                purified_messages.append({
+                    "role": "assistant",
+                    "content": msg.content
+                })
+            elif isinstance(msg, dict) and msg.get("role") == "assistant" and not msg.get("tool_calls") and msg.get("content"):
+                purified_messages.append(msg)
+
+        if len(purified_messages) > 12:
+            print("系统提示：对话历史过长，已清理为最近的12条消息。")
+            purified_messages = [purified_messages[0]] + purified_messages[-11:]
+
+        messages = purified_messages
+
         messages.append({"role": "user", "content": user_input})
 
         turn = 0
