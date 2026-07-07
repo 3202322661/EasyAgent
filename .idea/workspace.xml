@@ -4,9 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5efb2802-cf91-45ab-8450-bd60c80c73f6" name="更改" comment="修复大模型记忆污染导致的死循环问题。">
+    <list default="true" id="5efb2802-cf91-45ab-8450-bd60c80c73f6" name="更改" comment="添加ppt_tool">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/EasyAgent.md" beforeDir="false" afterPath="$PROJECT_DIR$/EasyAgent.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main-agent.py" beforeDir="false" afterPath="$PROJECT_DIR$/main-agent.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tool_configure.json" beforeDir="false" afterPath="$PROJECT_DIR$/tool_configure.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/bash_tool.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/bash_tool.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/ppt_tool.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/ppt_tool.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -186,7 +189,15 @@
       <option name="project" value="LOCAL" />
       <updated>1783390438555</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="添加ppt_tool">
+      <option name="closed" value="true" />
+      <created>1783399412397</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1783399412397</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -220,7 +231,8 @@
     <MESSAGE value="调整README.md内容，指出增加了ORC文字识别工具函数" />
     <MESSAGE value="调整内容" />
     <MESSAGE value="修复大模型记忆污染导致的死循环问题。" />
-    <option name="LAST_COMMIT_MESSAGE" value="修复大模型记忆污染导致的死循环问题。" />
+    <MESSAGE value="添加ppt_tool" />
+    <option name="LAST_COMMIT_MESSAGE" value="添加ppt_tool" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

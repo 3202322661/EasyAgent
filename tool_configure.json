@@ -12,11 +12,12 @@
             "description": "城市名称"
           }
         },
-        "required": ["city"]
+        "required": [
+          "city"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -34,11 +35,13 @@
             "description": "当前的天气状况，例如 '下大雨', '晴天 30度'。如果不知道天气，可以先调用天气工具获取。"
           }
         },
-        "required": ["city", "weather"]
+        "required": [
+          "city",
+          "weather"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -52,11 +55,12 @@
             "description": "要列出文件的目录路径"
           }
         },
-        "required": ["dir_path"]
+        "required": [
+          "dir_path"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -70,11 +74,12 @@
             "description": "要读取内容的文件路径"
           }
         },
-        "required": ["file_path"]
+        "required": [
+          "file_path"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -87,17 +92,18 @@
             "type": "string",
             "description": "要写入内容的文件路径"
           },
-
           "content": {
             "type": "string",
             "description": "要写入的内容"
           }
         },
-        "required": ["file_path", "content"]
+        "required": [
+          "file_path",
+          "content"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -111,11 +117,12 @@
             "description": "Word 文档路径（.docx 格式）"
           }
         },
-        "required": ["file_path"]
+        "required": [
+          "file_path"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -129,11 +136,12 @@
             "description": "Word 文档路径（.docx 格式）"
           }
         },
-        "required": ["file_path"]
+        "required": [
+          "file_path"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -147,11 +155,12 @@
             "description": "Word 文档路径（.docx 格式）"
           }
         },
-        "required": ["file_path"]
+        "required": [
+          "file_path"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -169,11 +178,12 @@
             "description": "文档标题（可选），将作为居中的一级标题显示在文档顶部"
           }
         },
-        "required": ["file_path"]
+        "required": [
+          "file_path"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -239,11 +249,13 @@
             "description": "首行缩进（磅），例如 24 约等于缩进两个中文字符"
           }
         },
-        "required": ["file_path", "text"]
+        "required": [
+          "file_path",
+          "text"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -281,11 +293,13 @@
             "description": "对齐方式，可选值：left（左对齐）、center（居中）、right（右对齐）、justify（两端对齐）"
           }
         },
-        "required": ["file_path", "text"]
+        "required": [
+          "file_path",
+          "text"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -332,11 +346,13 @@
             "description": "表格在页面中的对齐方式，可选值：left（左对齐）、center（居中）、right（右对齐）"
           }
         },
-        "required": ["file_path", "data"]
+        "required": [
+          "file_path",
+          "data"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -350,11 +366,12 @@
             "description": "Word 文档路径，若文件不存在则自动新建"
           }
         },
-        "required": ["file_path"]
+        "required": [
+          "file_path"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -400,11 +417,12 @@
             "description": "右缩进（磅）"
           }
         },
-        "required": ["file_path"]
+        "required": [
+          "file_path"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -446,11 +464,13 @@
             "description": "文字颜色，支持英文名称（red/blue/green 等）或十六进制格式（#FF0000）"
           }
         },
-        "required": ["file_path", "paragraph_index"]
+        "required": [
+          "file_path",
+          "paragraph_index"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -480,11 +500,12 @@
             "description": "右边距（英寸）"
           }
         },
-        "required": ["file_path"]
+        "required": [
+          "file_path"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -498,11 +519,12 @@
             "description": "Word 文档路径（.docx 格式）"
           }
         },
-        "required": ["file_path"]
+        "required": [
+          "file_path"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -520,11 +542,12 @@
             "description": "OCR识别语言，默认 'chi_sim+eng'（中文简体+英文）。常用值：'eng'（仅英文）、'chi_sim'（仅中文简体）、'chi_sim+eng'（中英混合）"
           }
         },
-        "required": ["file_path"]
+        "required": [
+          "file_path"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -538,11 +561,12 @@
             "description": "图片文件路径，支持 .png、.jpg、.jpeg、.gif、.bmp、.webp、.tiff 等格式"
           }
         },
-        "required": ["file_path"]
+        "required": [
+          "file_path"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -560,11 +584,12 @@
             "description": "命令执行超时时间（秒），默认 120。长时间运行的任务（如测试、推送大文件）可适当调大。"
           }
         },
-        "required": ["command"]
+        "required": [
+          "command"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -586,7 +611,6 @@
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -604,11 +628,12 @@
             "description": "传递给脚本的命令行参数（可选），例如 '--input data.csv --output result.json'"
           }
         },
-        "required": ["script_path"]
+        "required": [
+          "script_path"
+        ]
       }
     }
   },
-
   {
     "type": "function",
     "function": {
@@ -627,6 +652,552 @@
           }
         },
         "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "create_ppt",
+      "description": "创建一个新的空白 PPT 文件。支持指定标题幻灯片。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "保存路径（.pptx 格式），例如 'output.pptx'"
+          },
+          "title": {
+            "type": "string",
+            "description": "可选的标题幻灯片标题文本，不传则只创建空白 PPT"
+          }
+        },
+        "required": [
+          "file_path"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "add_slide",
+      "description": "向 PPT 文件添加一张新幻灯片。支持多种布局（title/title_content/section/two_content/blank/content_caption/picture_caption）。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "PPT 文件路径"
+          },
+          "layout": {
+            "type": "string",
+            "description": "布局名称：title（标题）/title_content（标题和内容）/section（节标题）/two_content（两栏内容）/blank（空白）/content_caption（内容和标题）/picture_caption（图片和标题），默认为 blank"
+          },
+          "title": {
+            "type": "string",
+            "description": "幻灯片标题文本（仅对含标题占位符的布局有效）"
+          },
+          "content": {
+            "type": "string",
+            "description": "幻灯片内容文本（仅对含内容占位符的布局有效）"
+          }
+        },
+        "required": [
+          "file_path"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "add_textbox",
+      "description": "在指定幻灯片中添加文本框。支持设置位置、尺寸、字体、颜色、对齐方式等格式。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "PPT 文件路径"
+          },
+          "slide_index": {
+            "type": "integer",
+            "description": "幻灯片索引（从 1 开始，-1 表示最后一张），默认为 -1"
+          },
+          "left": {
+            "type": "number",
+            "description": "左边距（英寸），默认为 1.0"
+          },
+          "top": {
+            "type": "number",
+            "description": "上边距（英寸），默认为 1.0"
+          },
+          "width": {
+            "type": "number",
+            "description": "宽度（英寸），默认为 8.0"
+          },
+          "height": {
+            "type": "number",
+            "description": "高度（英寸），默认为 1.5"
+          },
+          "text": {
+            "type": "string",
+            "description": "文本框内容"
+          },
+          "font_name": {
+            "type": "string",
+            "description": "字体名称，例如 '宋体', '微软雅黑', 'Arial'"
+          },
+          "font_size": {
+            "type": "integer",
+            "description": "字号（磅），例如 18"
+          },
+          "bold": {
+            "type": "boolean",
+            "description": "是否加粗，true 为加粗"
+          },
+          "italic": {
+            "type": "boolean",
+            "description": "是否斜体，true 为斜体"
+          },
+          "color": {
+            "type": "string",
+            "description": "文字颜色，支持英文名称（red/blue/black 等）或十六进制格式（#FF0000）"
+          },
+          "alignment": {
+            "type": "string",
+            "description": "对齐方式：left（左对齐）/center（居中）/right（右对齐）/justify（两端对齐）"
+          }
+        },
+        "required": [
+          "file_path",
+          "text"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "add_shape",
+      "description": "在指定幻灯片中添加形状（矩形、圆形、箭头、星形、心形等）。支持填充色、边框、文字设置。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "PPT 文件路径"
+          },
+          "slide_index": {
+            "type": "integer",
+            "description": "幻灯片索引（从 1 开始，-1 表示最后一张），默认为 -1"
+          },
+          "shape_type": {
+            "type": "string",
+            "description": "形状类型：rectangle/rounded_rectangle/oval/circle/triangle/diamond/pentagon/hexagon/arrow_right/arrow_left/star/heart/cloud/sun/moon/lightning/cross/cube/chevron/flowchart_process/flowchart_decision 等"
+          },
+          "left": {
+            "type": "number",
+            "description": "左边距（英寸），默认为 1.0"
+          },
+          "top": {
+            "type": "number",
+            "description": "上边距（英寸），默认为 1.0"
+          },
+          "width": {
+            "type": "number",
+            "description": "宽度（英寸），默认为 3.0"
+          },
+          "height": {
+            "type": "number",
+            "description": "高度（英寸），默认为 2.0"
+          },
+          "fill_color": {
+            "type": "string",
+            "description": "填充颜色，如 'red', '#FF0000'"
+          },
+          "line_color": {
+            "type": "string",
+            "description": "边框颜色"
+          },
+          "line_width": {
+            "type": "number",
+            "description": "边框宽度（磅）"
+          },
+          "text": {
+            "type": "string",
+            "description": "形状内文字"
+          },
+          "font_name": {
+            "type": "string",
+            "description": "字体名称"
+          },
+          "font_size": {
+            "type": "integer",
+            "description": "字号（磅）"
+          },
+          "font_color": {
+            "type": "string",
+            "description": "文字颜色"
+          },
+          "bold": {
+            "type": "boolean",
+            "description": "是否加粗"
+          },
+          "alignment": {
+            "type": "string",
+            "description": "对齐方式：left/center/right/justify"
+          }
+        },
+        "required": [
+          "file_path"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "add_table_slide",
+      "description": "在指定幻灯片中添加表格。支持表头、字体格式、对齐方式等设置。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "PPT 文件路径"
+          },
+          "slide_index": {
+            "type": "integer",
+            "description": "幻灯片索引（从 1 开始，-1 表示最后一张），默认为 -1"
+          },
+          "data": {
+            "type": "array",
+            "description": "表格数据，二维数组格式，如 [['A1','B1'],['A2','B2']]",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "headers": {
+            "type": "array",
+            "description": "表头列表，如 ['列1', '列2', '列3']",
+            "items": {
+              "type": "string"
+            }
+          },
+          "left": {
+            "type": "number",
+            "description": "左边距（英寸），默认为 1.0"
+          },
+          "top": {
+            "type": "number",
+            "description": "上边距（英寸），默认为 2.0"
+          },
+          "width": {
+            "type": "number",
+            "description": "表格总宽度（英寸），默认为 8.0"
+          },
+          "height": {
+            "type": "number",
+            "description": "表格总高度（英寸），不传则自适应"
+          },
+          "font_name": {
+            "type": "string",
+            "description": "字体名称"
+          },
+          "font_size": {
+            "type": "integer",
+            "description": "字号（磅），默认为 12"
+          },
+          "header_color": {
+            "type": "string",
+            "description": "表头文字颜色"
+          },
+          "header_bold": {
+            "type": "boolean",
+            "description": "表头是否加粗，默认为 true"
+          },
+          "alignment": {
+            "type": "string",
+            "description": "对齐方式：left/center/right/justify"
+          }
+        },
+        "required": [
+          "file_path",
+          "data"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "add_image",
+      "description": "在指定幻灯片中添加图片。支持指定位置和尺寸。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "PPT 文件路径"
+          },
+          "slide_index": {
+            "type": "integer",
+            "description": "幻灯片索引（从 1 开始，-1 表示最后一张），默认为 -1"
+          },
+          "image_path": {
+            "type": "string",
+            "description": "图片文件路径，支持 .png、.jpg、.jpeg、.gif 等格式"
+          },
+          "left": {
+            "type": "number",
+            "description": "左边距（英寸），默认为 1.0"
+          },
+          "top": {
+            "type": "number",
+            "description": "上边距（英寸），默认为 1.0"
+          },
+          "width": {
+            "type": "number",
+            "description": "图片宽度（英寸），不传则按比例缩放"
+          },
+          "height": {
+            "type": "number",
+            "description": "图片高度（英寸），不传则按比例缩放"
+          }
+        },
+        "required": [
+          "file_path",
+          "image_path"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "set_slide_background",
+      "description": "设置幻灯片背景颜色。可设置单张幻灯片或所有幻灯片。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "PPT 文件路径"
+          },
+          "slide_index": {
+            "type": "integer",
+            "description": "幻灯片索引（从 1 开始，-1 表示所有幻灯片），默认为 -1"
+          },
+          "color": {
+            "type": "string",
+            "description": "背景颜色，如 'blue', '#336699'"
+          }
+        },
+        "required": [
+          "file_path",
+          "color"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "add_title_slide",
+      "description": "添加一张标题幻灯片（封面）。支持标题、副标题、颜色和背景设置。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "PPT 文件路径"
+          },
+          "title": {
+            "type": "string",
+            "description": "主标题文本，默认为 '标题'"
+          },
+          "subtitle": {
+            "type": "string",
+            "description": "副标题文本（可选）"
+          },
+          "title_color": {
+            "type": "string",
+            "description": "标题文字颜色"
+          },
+          "subtitle_color": {
+            "type": "string",
+            "description": "副标题文字颜色"
+          },
+          "bg_color": {
+            "type": "string",
+            "description": "背景颜色"
+          }
+        },
+        "required": [
+          "file_path"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "add_bullet_slide",
+      "description": "添加一张带项目符号的内容幻灯片。支持标题、要点列表、字体和背景设置。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "PPT 文件路径"
+          },
+          "title": {
+            "type": "string",
+            "description": "幻灯片标题，默认为 '内容'"
+          },
+          "bullets": {
+            "type": "array",
+            "description": "项目符号列表，如 ['要点1', '要点2', '要点3']",
+            "items": {
+              "type": "string"
+            }
+          },
+          "font_name": {
+            "type": "string",
+            "description": "字体名称"
+          },
+          "font_size": {
+            "type": "integer",
+            "description": "字号（磅），默认为 18"
+          },
+          "color": {
+            "type": "string",
+            "description": "文字颜色"
+          },
+          "bg_color": {
+            "type": "string",
+            "description": "背景颜色"
+          }
+        },
+        "required": [
+          "file_path"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "read_ppt_info",
+      "description": "读取 PPT 文件的基本信息，包括幻灯片数量、尺寸、每张幻灯片的形状数量和文字预览。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "PPT 文件路径（.pptx 格式）"
+          }
+        },
+        "required": [
+          "file_path"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "read_ppt_text",
+      "description": "提取 PPT 文件中所有幻灯片的文字内容。适用于读取 .pptx 文档中的文字信息。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "PPT 文件路径（.pptx 格式）"
+          }
+        },
+        "required": [
+          "file_path"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "duplicate_slide",
+      "description": "复制指定幻灯片并追加到末尾。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "PPT 文件路径"
+          },
+          "slide_index": {
+            "type": "integer",
+            "description": "要复制的幻灯片索引（从 1 开始），默认为 1"
+          }
+        },
+        "required": [
+          "file_path"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "delete_slide",
+      "description": "删除指定幻灯片。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "PPT 文件路径"
+          },
+          "slide_index": {
+            "type": "integer",
+            "description": "要删除的幻灯片索引（从 1 开始），默认为 1"
+          }
+        },
+        "required": [
+          "file_path"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "reorder_slides",
+      "description": "重新排列幻灯片顺序。例如 [3, 1, 2] 表示将第3张移至第1位。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "PPT 文件路径"
+          },
+          "new_order": {
+            "type": "array",
+            "description": "新的顺序列表，如 [3, 1, 2]，必须包含 1 到 N 的所有整数",
+            "items": {
+              "type": "integer"
+            }
+          }
+        },
+        "required": [
+          "file_path",
+          "new_order"
+        ]
       }
     }
   }

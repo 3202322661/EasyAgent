@@ -119,9 +119,9 @@ def git_quick_commit_push(branch: str = "main", message: str = "auto commit") ->
     return run_bash_command(command, timeout=300)
 
 def run_python_script(script_path: str, args: str = "") -> str:
-    command = f"python3 {script_path} {args}".strip()
+    command = f"python {script_path} {args}".strip()
     return run_bash_command(command, timeout=300)
 
 def run_tests(test_path: str = "tests/", extra_args: str = "") -> str:
-    command = f"python3 -m pytest {test_path} {extra_args}".strip()
+    command = f"python -m pytest {test_path} {extra_args}".strip()
     return run_bash_command(command, timeout=600)

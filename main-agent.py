@@ -157,7 +157,7 @@ if __name__ == "__main__":
         {"role": "system", "content": system_prompt}
     ]
 
-    max_turns = 30
+    max_turns = 100
 
     while True:
         user_input = input("User: ")

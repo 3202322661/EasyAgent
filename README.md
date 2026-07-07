@@ -9,6 +9,7 @@
     <img src="https://img.shields.io/badge/Tavily-Search-orange?style=flat" alt="Tavily">
     <img src="https://img.shields.io/badge/OCR-PaddleOCR%20%7C%20Tesseract-blueviolet" alt="OCR">
     <img src="https://img.shields.io/badge/Word-python--docx-green" alt="python-docx">
+    <img src="https://img.shields.io/badge/PPT-python--pptx-blue" alt="python-pptx">
     <img src="https://img.shields.io/badge/UI-PySide6%20%7C%20PyQt5-brightgreen" alt="UI">
     <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
   </p>
@@ -20,7 +21,7 @@
 
 **Easy Agents** 是一个基于大语言模型（LLM）的轻量级智能体（Agent）框架。用户只需输入**自然语言指令**，系统便会自动理解意图、规划任务、调用工具并返回结果。
 
-提供 **命令行** 和 **图形界面** 两种交互方式，开箱即用。支持天气查询、旅游推荐、代码文件操作、Word 文档自动化、图片 OCR 文字识别、Git 快捷操作、运行脚本与测试等多种功能。
+提供 **命令行** 和 **图形界面** 两种交互方式，开箱即用。支持天气查询、旅游推荐、代码文件操作、Word 文档自动化、PPT 演示文稿创建、图片 OCR 文字识别、Git 快捷操作、运行脚本与测试等多种功能。
 
 > 💡 **核心理念**：让大模型成为你的"智能助手"，通过工具调用连接真实世界。
 
@@ -62,6 +63,7 @@ python main-window.py
 | 🗺️ **旅游推荐** | 根据天气情况联网搜索景点与活动推荐 | _"北京下雨了，有什么好玩的？"_ |
 | 📂 **文件操作** | 列出目录树、读写代码文件（UTF-8，自动截断过长内容） | _"读取 main-agent.py 的内容"_ |
 | 📝 **Word 文档** | 创建/编辑文档，添加段落、标题、表格、分页符，设置字体与段落格式 | _"创建一个项目报告文档"_ |
+| 📊 **PPT 演示文稿** | 创建演示文稿，添加幻灯片、文本框、形状、表格、图片，设置背景与字体样式 | _"为项目创建一个产品介绍 PPT"_ |
 | 🖼️ **图片 OCR** | 识别图片中的文字（支持中文/英文/数字），读取图片基本信息 | _"识别这张图片中的文字"_ |
 | 💻 **终端命令** | 在项目目录下执行 bash 命令，运行 Python 脚本 | _"运行测试用例"_ |
 | 🔄 **Git 快捷操作** | 一键完成 git add、commit、push | _"把代码推送到远程仓库"_ |
@@ -86,6 +88,7 @@ python main-window.py
     ├── travel_tool.py          #   ├── 🌤️ 天气查询 & 旅游推荐
     ├── code_tool.py            #   ├── 📂 代码 / 文件操作
     ├── word_tool.py            #   ├── 📝 Word 文档生成与格式编辑
+    ├── ppt_tool.py             #   ├── 📊 PPT 幻灯片创建与编辑
     ├── image_tool.py           #   ├── 🖼️ 图片 OCR 识别与信息提取
     └── bash_tool.py            #   └── 💻 终端命令执行 & Git 快捷操作
 ```
@@ -159,6 +162,25 @@ python main-window.py
 | `read_image_text(file_path, lang)` | 识别图片中的文字（OCR），支持中英文混合识别，自动切换 pytesseract / PaddleOCR 引擎 |
 | `read_image_info(file_path)` | 读取图片基本信息（尺寸、格式、颜色模式、文件大小、EXIF 拍摄信息摘要等） |
 
+### 📊 PPT 工具（`ppt_tool.py`）
+
+| 函数名 | 功能 |
+|--------|------|
+| `create_ppt(file_path, title)` | 创建空白 PPT 文件，可选标题幻灯片 |
+| `add_slide(file_path, layout, title, content)` | 添加新幻灯片，支持 7 种布局（title / title_content / section / two_content / blank / content_caption / picture_caption） |
+| `add_textbox(file_path, slide_index, ...)` | 在指定幻灯片中添加文本框，支持字体、颜色、对齐等格式设置 |
+| `add_shape(file_path, slide_index, ...)` | 添加形状（矩形、圆角矩形、椭圆、三角形、菱形、箭头、星形、心形、云形等 20+ 种），支持填充色、边框、文字 |
+| `add_table_slide(file_path, slide_index, ...)` | 在幻灯片中添加表格，支持表头、字体、对齐方式 |
+| `add_image(file_path, slide_index, ...)` | 在幻灯片中添加图片，支持指定位置和尺寸 |
+| `add_title_slide(file_path, title, subtitle, ...)` | 添加标题幻灯片封面，支持标题、副标题、颜色和背景设置 |
+| `add_bullet_slide(file_path, title, bullets, ...)` | 添加带项目符号的内容幻灯片 |
+| `set_slide_background(file_path, slide_index, color)` | 设置幻灯片背景颜色，支持单张或全部幻灯片 |
+| `duplicate_slide(file_path, slide_index)` | 复制指定幻灯片并追加到末尾 |
+| `delete_slide(file_path, slide_index)` | 删除指定幻灯片 |
+| `reorder_slides(file_path, new_order)` | 重新排列幻灯片顺序 |
+| `read_ppt_info(file_path)` | 读取 PPT 基本信息（幻灯片数量、尺寸、形状数量、文字预览） |
+| `read_ppt_text(file_path)` | 提取 PPT 中所有幻灯片的文字内容 |
+
 ### 📝 Word 工具（`word_tool.py`）
 
 | 函数名 | 功能 |
@@ -192,12 +214,12 @@ python main-window.py
 ### 环境要求
 
 - Python 3.8+
-- 基础依赖：`openai`, `requests`, `tavily-python`, `python-docx`, `Pillow`
+- 基础依赖：`openai`, `requests`, `tavily-python`, `python-docx`, `Pillow`, `python-pptx`
 - GUI 版本额外依赖：`PySide6`（或 `PyQt5`）
 
 ```bash
 # 安装基础依赖
-pip install openai requests tavily-python python-docx Pillow
+pip install openai requests tavily-python python-docx Pillow python-pptx
 
 # GUI 版本需额外安装
 pip install PySide6
@@ -267,6 +289,9 @@ User: 北京下雨了，推荐一些室内的景点
 
 User: 创建一个Word文档，标题为"我的旅游计划"
 🤖 → ✓ Word 文档已创建: '我的旅游计划.docx'
+
+User: 创建一个产品介绍的PPT
+🤖 → ✓ PPT 文件已创建: '产品介绍.pptx'（共 8 张幻灯片）
 
 User: 识别这张图片中的文字
 🤖 → ━━━ OCR 识别结果 ━━━
@@ -340,6 +365,7 @@ def my_custom_function(param1: str, param2: int) -> str:
 | `tavily-python` | 联网搜索旅游景点推荐 | ✅ |
 | `python-docx` | 创建和编辑 Word 文档 | ✅ |
 | `Pillow` | 图片处理（打开、读取格式/尺寸/EXIF 等） | ✅ |
+| `python-pptx` | 创建和编辑 PPT 演示文稿 | ✅ |
 | `PySide6` 或 `PyQt5` | 图形界面框架（GUI 模式需要） | ⬜ |
 | `pytesseract` | OCR 文字识别引擎（方案一） | ⬜ |
 | `paddlepaddle` + `paddleocr` | OCR 文字识别引擎（方案二，中文效果更优） | ⬜ |
