@@ -76,6 +76,8 @@ python main-window.py
 ├── main-window.py              # 🖥️ 主程序入口（图形界面版 - PySide6 可视化工作台）
 ├── agent_config.json           # ⚙️ GUI 配置持久化文件（API Key / 模型 / 地址等）
 ├── tool_configure.json         # 🔧 工具函数定义（OpenAI Function Calling 格式）
+├── EasyAgent.md                # 📄 智能体系统提示词模板（Role / Constraints / Background）
+├── ui_guide.txt                # 📋 图形界面操作指南
 ├── README.md                   # 📖 项目说明
 │
 └── tools/                      # 📦 工具模块目录（自动加载）
