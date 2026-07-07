@@ -11,6 +11,28 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import font as tkfont
 import traceback
+import sys
+import os
+
+
+# ============================================================
+# 全局异常处理：将所有未捕获的异常记录到文件
+# ============================================================
+ERROR_LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gobang_error.log")
+
+def global_exception_handler(exc_type, exc_value, exc_tb):
+    """全局异常处理钩子，将异常信息写入日志文件"""
+    error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
+    with open(ERROR_LOG_FILE, "a", encoding="utf-8") as f:
+        f.write("=" * 60 + "\n")
+        f.write(f"【全局异常】{exc_type.__name__}\n")
+        f.write(error_msg)
+        f.write("\n" + "=" * 60 + "\n")
+    # 同时也打印到控制台
+    print(error_msg, file=sys.stderr)
+
+# 注册全局异常钩子
+sys.excepthook = global_exception_handler
 
 
 class GobangGame:
@@ -43,6 +65,9 @@ class GobangGame:
         self.root.title("五子棋 - Gobang")
         self.root.resizable(False, False)
 
+        # 替换 Tkinter 默认的异常处理方法，将错误写入日志
+        root.report_callback_exception = self._tk_callback_exception
+
         # 游戏状态
         self.board = [[0] * self.BOARD_SIZE for _ in range(self.BOARD_SIZE)]
         # 0: 空, 1: 黑子, 2: 白子
@@ -57,6 +82,20 @@ class GobangGame:
         # 绑定键盘事件
         self.root.bind("<Control-z>", lambda e: self.undo_move())
         self.root.bind("<Control-r>", lambda e: self.reset_game())
+
+    def _tk_callback_exception(self, exc, val, tb):
+        """覆盖 Tkinter 默认的回调异常处理方法，将错误写入文件而不是只打印到控制台"""
+        error_msg = "".join(traceback.format_exception(exc, val, tb))
+        with open(ERROR_LOG_FILE, "a", encoding="utf-8") as f:
+            f.write("=" * 60 + "\n")
+            f.write("【Tkinter 回调异常】\n")
+            f.write(error_msg)
+            f.write("\n" + "=" * 60 + "\n")
+        # 弹出错误对话框给用户
+        try:
+            messagebox.showerror("程序出错", f"发生了未预期的错误，详情已记录到：\n{ERROR_LOG_FILE}\n\n{exc.__name__}: {val}")
+        except Exception:
+            pass
 
     def _create_widgets(self):
         """创建界面组件"""
@@ -258,7 +297,11 @@ class GobangGame:
             # 落子
             self._place_piece(row, col)
         except Exception as e:
-            messagebox.showerror("错误", f"点击事件异常：{e}\n{traceback.format_exc()}")
+            error_detail = traceback.format_exc()
+            # 同时写入日志
+            with open(ERROR_LOG_FILE, "a", encoding="utf-8") as f:
+                f.write(f"【点击回调异常】{e}\n{error_detail}\n")
+            messagebox.showerror("错误", f"点击事件异常：{e}")
 
     def _on_mouse_move(self, event):
         """鼠标移动事件 - 显示悬停预览"""
@@ -309,74 +352,78 @@ class GobangGame:
 
     def _draw_piece(self, row, col, player):
         """绘制棋子"""
-        x = self.MARGIN + col * self.CELL_SIZE
-        y = self.MARGIN + row * self.CELL_SIZE
-        r = self.PIECE_RADIUS
+        try:
+            x = self.MARGIN + col * self.CELL_SIZE
+            y = self.MARGIN + row * self.CELL_SIZE
+            r = self.PIECE_RADIUS
 
-        # 绘制阴影效果（使用标准6位十六进制颜色，不支持8位带alpha的颜色）
-        shadow_offset = 2
-        self.canvas.create_oval(
-            x - r + shadow_offset,
-            y - r + shadow_offset,
-            x + r + shadow_offset,
-            y + r + shadow_offset,
-            fill="#C0B090",  # 修复：使用标准6位颜色（比棋盘底色略深的颜色）
-            outline="",
-            tags="shadow",
-        )
-
-        # 绘制棋子主体
-        color = self.COLOR_BLACK if player == 1 else self.COLOR_WHITE
-        outline = "#333333" if player == 1 else "#CCCCCC"
-        piece = self.canvas.create_oval(
-            x - r,
-            y - r,
-            x + r,
-            y + r,
-            fill=color,
-            outline=outline,
-            width=1.5,
-            tags="piece",
-        )
-
-        # 添加高光效果（让棋子更有立体感）
-        if player == 1:
-            # 黑子高光（使用标准颜色替代带alpha的颜色）
-            highlight_r = r * 0.35
+            # 绘制阴影效果
+            shadow_offset = 2
             self.canvas.create_oval(
-                x - highlight_r - 2,
-                y - highlight_r - 2,
-                x - 2,
-                y - 2,
-                fill="#808080",  # 修复：使用标准灰色替代 #FFFFFF30
+                x - r + shadow_offset,
+                y - r + shadow_offset,
+                x + r + shadow_offset,
+                y + r + shadow_offset,
+                fill="#C0B090",
                 outline="",
-                tags="piece",
+                tags="shadow",
             )
-        else:
-            # 白子高光（使用标准颜色替代带alpha的颜色）
-            highlight_r = r * 0.4
+
+            # 绘制棋子主体
+            color = self.COLOR_BLACK if player == 1 else self.COLOR_WHITE
+            outline = "#333333" if player == 1 else "#CCCCCC"
             self.canvas.create_oval(
-                x - highlight_r - 1,
-                y - highlight_r - 1,
-                x - 1,
-                y - 1,
-                fill="#E8E8E8",  # 修复：使用标准浅灰色替代 #FFFFFFB0
-                outline="",
+                x - r,
+                y - r,
+                x + r,
+                y + r,
+                fill=color,
+                outline=outline,
+                width=1.5,
                 tags="piece",
             )
 
-        # 白子加边线内圈
-        if player == 2:
-            inner_r = r * 0.85
-            self.canvas.create_oval(
-                x - inner_r,
-                y - inner_r,
-                x + inner_r,
-                y + inner_r,
-                outline="#E0E0E0",
-                width=1,
-                tags="piece",
-            )
+            # 添加高光效果
+            if player == 1:
+                highlight_r = r * 0.35
+                self.canvas.create_oval(
+                    x - highlight_r - 2,
+                    y - highlight_r - 2,
+                    x - 2,
+                    y - 2,
+                    fill="#808080",
+                    outline="",
+                    tags="piece",
+                )
+            else:
+                highlight_r = r * 0.4
+                self.canvas.create_oval(
+                    x - highlight_r - 1,
+                    y - highlight_r - 1,
+                    x - 1,
+                    y - 1,
+                    fill="#E8E8E8",
+                    outline="",
+                    tags="piece",
+                )
+
+            # 白子加边线内圈
+            if player == 2:
+                inner_r = r * 0.85
+                self.canvas.create_oval(
+                    x - inner_r,
+                    y - inner_r,
+                    x + inner_r,
+                    y + inner_r,
+                    outline="#E0E0E0",
+                    width=1,
+                    tags="piece",
+                )
+        except Exception as e:
+            # 绘制棋子出错时记录日志
+            with open(ERROR_LOG_FILE, "a", encoding="utf-8") as f:
+                f.write(f"【绘制棋子异常】row={row}, col={col}, player={player}: {e}\n{traceback.format_exc()}\n")
+            raise  # 重新抛出，让上层处理
 
     def _mark_last_move(self, row, col):
         """标记最后落子的位置"""
@@ -393,7 +440,6 @@ class GobangGame:
         elif player == 2:
             color = self.COLOR_HINT
         else:
-            # 安全兜底：如果该位置为空（理论上不会发生），使用红色标记
             color = "#FF0000"
         mark_size = 5
 
@@ -489,7 +535,10 @@ class GobangGame:
             self.turn_label.config(text=f"当前：{player_text}走")
             self._update_stats()
         except Exception as e:
-            messagebox.showerror("错误", f"悔棋事件异常：{e}\n{traceback.format_exc()}")
+            error_detail = traceback.format_exc()
+            with open(ERROR_LOG_FILE, "a", encoding="utf-8") as f:
+                f.write(f"【悔棋回调异常】{e}\n{error_detail}\n")
+            messagebox.showerror("错误", f"悔棋事件异常：{e}")
 
     def reset_game(self):
         """重新开始游戏"""
@@ -513,7 +562,10 @@ class GobangGame:
             self.turn_label.config(text="当前：● 黑棋走")
             self._update_stats()
         except Exception as e:
-            messagebox.showerror("错误", f"重置事件异常：{e}\n{traceback.format_exc()}")
+            error_detail = traceback.format_exc()
+            with open(ERROR_LOG_FILE, "a", encoding="utf-8") as f:
+                f.write(f"【重置回调异常】{e}\n{error_detail}\n")
+            messagebox.showerror("错误", f"重置事件异常：{e}")
 
     def _show_help(self):
         """显示游戏说明"""
@@ -544,6 +596,9 @@ class GobangGame:
 
 def main():
     """主函数"""
+    # 将 stderr 也重定向到日志文件
+    sys.stderr = open(ERROR_LOG_FILE, "a", encoding="utf-8")
+    
     root = tk.Tk()
     # 设置窗口图标（如果有）
     try:
