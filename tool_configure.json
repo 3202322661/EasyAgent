@@ -547,13 +547,13 @@
     "type": "function",
     "function": {
       "name": "run_bash_command",
-      "description": "在项目根目录下执行指定的 bash 命令，返回标准输出和标准错误。适用于 Git 操作（提交/推送/拉取等）、运行脚本、执行测试等各类终端任务。支持用 && 连接多个命令。",
+      "description": "在本地终端安全执行 Bash 命令。支持查看标准输出与标准错误。你可以通过检查返回文本头部的 [STATUS: SUCCESS] 或 [STATUS: FAILED] 来判断命令是否真正执行成功。支持调用 'cd 目录名' 切换当前的工作路径空间。",
       "parameters": {
         "type": "object",
         "properties": {
           "command": {
             "type": "string",
-            "description": "要执行的 bash 命令字符串，例如 'git add . && git commit -m \"update\" && git push' 或 'python3 test.py' 或 'pytest tests/ -v'"
+            "description": "要执行的单条或短链 Bash 命令。禁止使用未授权的命令前缀。示例: 'ls -la' 或 'pip install -r requirements.txt'"
           },
           "timeout": {
             "type": "integer",

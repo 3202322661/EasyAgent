@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5efb2802-cf91-45ab-8450-bd60c80c73f6" name="更改" comment="调整内容">
+    <list default="true" id="5efb2802-cf91-45ab-8450-bd60c80c73f6" name="更改" comment="修复大模型记忆污染导致的死循环问题。">
+      <change afterPath="$PROJECT_DIR$/EasyAgent.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main-agent.py" beforeDir="false" afterPath="$PROJECT_DIR$/main-agent.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main-window.py" beforeDir="false" afterPath="$PROJECT_DIR$/main-window.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tool_configure.json" beforeDir="false" afterPath="$PROJECT_DIR$/tool_configure.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -65,22 +69,23 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.code_tool.executor": "Run",
-    "Python.gobang.executor": "Run",
-    "Python.main-agent.executor": "Run",
-    "Python.main-window.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "E:/PythonProject/Hello-Agents/tools",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.code_tool.executor&quot;: &quot;Run&quot;,
+    &quot;Python.gobang.executor&quot;: &quot;Run&quot;,
+    &quot;Python.gomoku.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main-agent.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main-window.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;E:/PythonProject/Hello-Agents/tools&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="E:\PythonProject\Hello-Agents\tools" />
@@ -176,7 +181,15 @@
       <option name="project" value="LOCAL" />
       <updated>1783345557152</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="修复大模型记忆污染导致的死循环问题。">
+      <option name="closed" value="true" />
+      <created>1783390438555</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1783390438555</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -209,7 +222,8 @@
     <MESSAGE value="添加image_tool,利用OCR识别识别图片中的文字内容。" />
     <MESSAGE value="调整README.md内容，指出增加了ORC文字识别工具函数" />
     <MESSAGE value="调整内容" />
-    <option name="LAST_COMMIT_MESSAGE" value="调整内容" />
+    <MESSAGE value="修复大模型记忆污染导致的死循环问题。" />
+    <option name="LAST_COMMIT_MESSAGE" value="修复大模型记忆污染导致的死循环问题。" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

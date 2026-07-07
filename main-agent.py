@@ -39,6 +39,25 @@ def auto_load_tool_functions(tools_dir: str = "tools") -> dict:
                 print(f"加载模块 {module_name} 时发生错误: {str(e)}")
     return registry
 
+def load_system_prompt(file_path: str, variables: dict = None) -> str:
+    if not os.path.exists(file_path):
+        print(f"[Warning] 未找到提示词文件 {file_path}，使用系统默认硬编码提示词。")
+        return "你是一个专业的AI助手。"
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read().strip()
+
+        if variables:
+            for key, value in variables.items():
+                placeholder = f"{{{{{key}}}}}"
+                content = content.replace(placeholder, str(value))
+
+        return content
+    except Exception as e:
+        print(f"[ERROR] 读取 .md 提示词文件失败: {e}")
+        return "你是一个专业的智能助手。"
+
 def execute_tool(tool_call):
     f_name = tool_call.function.name
     f_id = tool_call.id
@@ -124,8 +143,18 @@ if __name__ == "__main__":
         api_key = API_KEY
     )
 
+    system_env = {
+        "env_version": "Python 3.13 / PySide6",
+        "project_root": os.path.abspath(os.path.dirname(__file__))
+    }
+
+    system_prompt = load_system_prompt(
+        file_path="EasyAgent.md",
+        variables=system_env
+    )
+
     messages = [
-        {"role": "system", "content": "你是一个智能助手，能够根据用户的请求调用工具并提供有用的信息。"}
+        {"role": "system", "content": system_prompt}
     ]
 
     max_turns = 30

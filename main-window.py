@@ -1,11 +1,11 @@
 """
-main-window.py - AI 智能体可视化工作台
-========================================
-基于 PyQt5 构建的图形界面，替代命令行交互。
-实现了智能体对话、工具调用可视化、配置管理等功能。
+main-window.py — Claude Code 风格智能体工作台
+=================================================
+基于 PySide6 构建，严格遵循暗黑科技风 UI 设计哲学。
+VS Code 双栏布局（侧边工具面板 + 主聊天区）+ 实时状态反馈。
 
 依赖安装:
-    pip install PyQt5 openai
+    pip install PySide6 openai
 
 运行方式:
     python main-window.py
@@ -16,136 +16,277 @@ import importlib
 import inspect
 import json
 import os
+import re
 import sys
 import time
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
 from PySide6.QtCore import (
-    Qt, QThread, Signal, QEvent
+    Qt, QThread, Signal, QEvent, QTimer
 )
 from PySide6.QtGui import (
-    QFont, QColor
+    QFont, QColor, QIcon, QTextCursor, QKeyEvent, QPixmap, QPainter, QLinearGradient
 )
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QTextEdit, QLineEdit, QPushButton, QLabel, QSplitter,
     QTreeWidget, QTreeWidgetItem, QGroupBox,
-    QStatusBar, QMessageBox, QGridLayout, QTextBrowser
+    QStatusBar, QMessageBox, QGridLayout, QTextBrowser,
+    QFrame, QScrollBar, QListWidget, QListWidgetItem
 )
 from openai import OpenAI
 
+
 # ============================================================
-#  样式表 - 现代化暗色/亮色混合风格
+#  🎨 精致暗黑风样式表
+#  渐变背景 · 圆角卡片 · 微妙阴影 · VS Code 色彩体系
 # ============================================================
 STYLE_SHEET = """
+/* ---- 全局基础 ---- */
 QMainWindow {
-    background-color: #f5f5f5;
+    background-color: #1a1b1e;
+}
+QWidget {
+    background-color: #1a1b1e;
+    color: #c9d1d9;
+    font-family: "Microsoft YaHei", -apple-system, "Segoe UI", "Consolas", sans-serif;
 }
 
-QGroupBox {
-    font-size: 13px;
+/* ---- 侧边栏 ---- */
+QFrame#SidePanel {
+    background-color: #151618;
+    border-right: 1px solid #2d2e31;
+}
+QLabel#SideTitle {
+    color: #8b949e;
+    font-size: 11px;
     font-weight: bold;
-    border: 1px solid #d0d0d0;
-    border-radius: 8px;
-    margin-top: 12px;
-    padding: 16px 12px 12px 12px;
-    background-color: #ffffff;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 12px 14px 6px 14px;
+    background: transparent;
 }
-QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top left;
-    padding: 0 8px;
-    color: #2c3e50;
-}
-
-QLineEdit {
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 6px 10px;
+QLabel#SideItem {
+    color: #c9d1d9;
     font-size: 13px;
-    background-color: #ffffff;
+    padding: 7px 14px;
+    background: transparent;
+    border-radius: 4px;
 }
-QLineEdit:focus {
-    border-color: #3498db;
+QLabel#SideItem:hover {
+    background-color: #1f2023;
+    color: #58a6ff;
 }
-
-QTextEdit, QTextBrowser {
-    border: 1px solid #d0d0d0;
-    border-radius: 5px;
-    background-color: #ffffff;
+QLabel#SideItemActive {
+    color: #58a6ff;
     font-size: 13px;
+    padding: 7px 14px;
+    background: #1f2023;
+    border-left: 2px solid #58a6ff;
+    border-radius: 0 4px 4px 0;
+}
+QLabel#SideSection {
+    color: #8b949e;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 16px 14px 4px 14px;
+    background: transparent;
+}
+QFrame#SideDivider {
+    background-color: #2d2e31;
+    max-height: 1px;
+    margin: 4px 14px;
 }
 
-QPushButton {
+/* ---- 系统状态栏 (顶部) ---- */
+QLabel#SystemStatusBar {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #1c1d20, stop:1 #151618);
+    color: #8b949e;
+    font-size: 11px;
+    padding: 5px 16px;
+    border-bottom: 1px solid #2d2e31;
+    font-family: "Consolas", "Microsoft YaHei", monospace;
+}
+
+/* ---- 聊天消息区域 ---- */
+QTextBrowser#ChatDisplay {
+    background-color: #1a1b1e;
+    color: #c9d1d9;
+    font-size: 14px;
     border: none;
-    border-radius: 5px;
-    padding: 8px 18px;
+    padding: 16px 20px;
+    selection-background-color: #1f3a5f;
+    font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+
+/* ---- 输入框 ---- */
+QTextEdit#InputEdit {
+    background-color: #212226;
+    color: #c9d1d9;
+    font-size: 13.5px;
+    border: 1px solid #343539;
+    border-radius: 8px;
+    padding: 10px 16px;
+    selection-background-color: #1f3a5f;
+    font-family: "Microsoft YaHei", "Consolas", sans-serif;
+}
+QTextEdit#InputEdit:focus {
+    border-color: #58a6ff;
+    background-color: #1c1d20;
+}
+QTextEdit#InputEdit:disabled {
+    background-color: #1a1b1e;
+    color: #484f58;
+}
+
+/* ---- 发送按钮 ---- */
+QPushButton#BtnSend {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #238636, stop:1 #1e7a30);
+    color: #FFFFFF;
     font-size: 13px;
     font-weight: bold;
-    color: white;
-    background-color: #3498db;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    min-width: 72px;
 }
-QPushButton:hover {
-    background-color: #2980b9;
+QPushButton#BtnSend:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #2ea043, stop:1 #238636);
 }
-QPushButton:pressed {
-    background-color: #2471a3;
+QPushButton#BtnSend:pressed {
+    background-color: #1a6a2a;
 }
-QPushButton:disabled {
-    background-color: #bdc3c7;
-    color: #7f8c8d;
-}
-
-QPushButton#btnSend {
-    background-color: #27ae60;
-    min-width: 80px;
-}
-QPushButton#btnSend:hover {
-    background-color: #229954;
+QPushButton#BtnSend:disabled {
+    background: #2d2e31;
+    color: #484f58;
 }
 
-QPushButton#btnClear {
-    background-color: #e74c3c;
-    min-width: 60px;
+/* ---- 辅助按钮 ---- */
+QPushButton#BtnTool {
+    background-color: #212226;
+    color: #8b949e;
+    font-size: 12px;
+    border: 1px solid #343539;
+    border-radius: 6px;
+    padding: 6px 14px;
+    min-width: 50px;
 }
-QPushButton#btnClear:hover {
-    background-color: #c0392b;
+QPushButton#BtnTool:hover {
+    background-color: #2d2e31;
+    border-color: #58a6ff;
+    color: #c9d1d9;
+}
+QPushButton#BtnTool:pressed {
+    background-color: #1a1b1e;
+}
+QPushButton#BtnTool:checked {
+    background-color: #1f3a5f;
+    border-color: #58a6ff;
+    color: #58a6ff;
 }
 
-QPushButton#btnStop {
-    background-color: #e67e22;
-    min-width: 60px;
-}
-QPushButton#btnStop:hover {
-    background-color: #d35400;
-}
-
-QPushButton#btnSetting {
-    background-color: #95a5a6;
-    min-width: 60px;
-}
-QPushButton#btnSetting:hover {
-    background-color: #7f8c8d;
+/* ---- 底部栏 ---- */
+QLabel#FooterLabel {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #151618, stop:1 #1a1b1e);
+    color: #484f58;
+    font-size: 11px;
+    padding: 3px 16px;
+    border-top: 1px solid #2d2e31;
+    font-family: "Consolas", monospace;
 }
 
+/* ---- 滚动条 (暗色精致) ---- */
+QScrollBar:vertical {
+    background-color: transparent;
+    width: 8px;
+    border: none;
+}
+QScrollBar::handle:vertical {
+    background-color: #343539;
+    border-radius: 4px;
+    min-height: 30px;
+    margin: 2px;
+}
+QScrollBar::handle:vertical:hover {
+    background-color: #484f58;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+QScrollBar:horizontal {
+    background-color: transparent;
+    height: 8px;
+    border: none;
+}
+QScrollBar::handle:horizontal {
+    background-color: #343539;
+    border-radius: 4px;
+    min-width: 30px;
+    margin: 2px;
+}
+QScrollBar::handle:horizontal:hover {
+    background-color: #484f58;
+}
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0px;
+}
+
+/* ---- 设置对话框按钮 ---- */
+QPushButton#BtnSettings {
+    background-color: transparent;
+    color: #8b949e;
+    font-size: 12px;
+    border: 1px solid #343539;
+    border-radius: 6px;
+    padding: 4px 12px;
+}
+QPushButton#BtnSettings:hover {
+    background-color: #212226;
+    border-color: #58a6ff;
+    color: #c9d1d9;
+}
+
+/* ---- 树形控件/列表 (侧边工具列表) ---- */
 QTreeWidget {
-    border: 1px solid #d0d0d0;
-    border-radius: 5px;
-    background-color: #ffffff;
+    background-color: transparent;
+    color: #c9d1d9;
     font-size: 12px;
+    border: none;
+    outline: none;
+}
+QTreeWidget::item {
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+QTreeWidget::item:hover {
+    background-color: #1f2023;
+}
+QTreeWidget::item:selected {
+    background-color: #1f3a5f;
+    color: #58a6ff;
+}
+QTreeWidget::branch:has-children:!has-siblings:closed,
+QTreeWidget::branch:closed:has-children:has-siblings {
+    border-image: none;
+}
+QTreeWidget::branch:open:has-children:!has-siblings,
+QTreeWidget::branch:open:has-children:has-siblings {
+    border-image: none;
 }
 
-QStatusBar {
-    background-color: #ecf0f1;
-    color: #2c3e50;
-    font-size: 12px;
-    border-top: 1px solid #d0d0d0;
-}
-
-QSplitter::handle {
-    background-color: #d0d0d0;
-    width: 2px;
+/* ---- 输入容器背景 ---- */
+QWidget#InputContainer {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #1e1f22, stop:1 #1a1b1e);
+    border-top: 1px solid #2d2e31;
+    padding: 10px 16px;
 }
 """
 
@@ -161,7 +302,7 @@ def load_tools_config(file_path: str) -> List[Dict[str, Any]]:
             config = json.load(f)
         return config
     except Exception as e:
-        print(f"加载工具配置失败: {str(e)}")
+        print(f"[配置] 加载工具配置失败: {str(e)}")
         return []
 
 
@@ -169,7 +310,7 @@ def auto_load_tool_functions(tools_dir: str = "tools") -> dict:
     """自动加载 tools 目录下的所有工具函数"""
     registry = {}
     if not os.path.isdir(tools_dir):
-        print(f"工具目录 {tools_dir} 不存在。")
+        print(f"[工具] 工具目录 {tools_dir} 不存在。")
         return registry
     for file_name in os.listdir(tools_dir):
         if file_name.endswith(".py") and not file_name.startswith("__"):
@@ -240,12 +381,12 @@ def execute_tool(tool_call, available_tools: dict) -> dict:
 
 class LLMWorker(QThread):
     """在后台线程中调用 LLM API，通过信号将结果传回 UI"""
-    response_received = Signal(object)   # 发送 LLM 回复消息
-    tool_called = Signal(str, str, str)  # (工具名, 参数, 结果)
-    finished_one_round = Signal()        # 一轮对话结束
-    error_occurred = Signal(str)         # 错误信息
-    ai_message = Signal(str)             # AI 最终文字回复
-    status_update = Signal(str)          # 状态更新
+
+    status_update = Signal(str)
+    tool_called = Signal(str, str, str)
+    ai_message = Signal(str)
+    error_occurred = Signal(str)
+    finished_one_round = Signal()
 
     def __init__(self, api_key: str, base_url: str, model: str,
                  messages: list, tools_config: list, available_tools: dict,
@@ -267,13 +408,15 @@ class LLMWorker(QThread):
     def run(self):
         """线程主函数 - 执行多轮对话逻辑"""
         if not self.api_key:
-            self.error_occurred.emit("⚠️ API Key 未设置！请在设置中填写。")
+            self.error_occurred.emit("API Key 未设置！请在设置中填写。")
+            self.finished_one_round.emit()
             return
 
         try:
             client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         except Exception as e:
-            self.error_occurred.emit(f"⚠️ OpenAI 客户端初始化失败: {str(e)}")
+            self.error_occurred.emit(f"OpenAI 客户端初始化失败: {str(e)}")
+            self.finished_one_round.emit()
             return
 
         turn = 0
@@ -281,7 +424,7 @@ class LLMWorker(QThread):
 
         while turn < self.max_turns and self._is_running:
             turn += 1
-            self.status_update.emit(f"🤔 正在思考 第 {turn} 轮...")
+            self.status_update.emit(f"[思考中] Agent 正在分析... (第 {turn} 轮)")
 
             try:
                 kwargs = {
@@ -297,21 +440,20 @@ class LLMWorker(QThread):
                 llm_response = response.choices[0].message
 
             except Exception as e:
-                self.error_occurred.emit(f"⚠️ API 调用失败: {str(e)}")
+                self.error_occurred.emit(f"API 调用失败: {str(e)}")
                 break
 
             if llm_response is None:
-                self.error_occurred.emit("⚠️ 模型返回为空")
+                self.error_occurred.emit("模型返回为空")
                 break
 
             # 将 Assistant 消息加入对话历史
             self.messages.append(llm_response)
-            self.response_received.emit(llm_response)
 
             # ---- 检查是否有工具调用 ----
             if llm_response.tool_calls:
                 tool_count = len(llm_response.tool_calls)
-                self.status_update.emit(f"🔧 正在调用 {tool_count} 个工具...")
+                self.status_update.emit(f"[工具触发] 自动激活工具箱 ({tool_count} 个工具)")
 
                 # 并行执行工具
                 with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -334,9 +476,8 @@ class LLMWorker(QThread):
                             tc_param = tc.function.arguments
                             break
 
-                    # 发送工具调用信号（用于UI更新）
+                    # 发送工具调用信号
                     self.tool_called.emit(tool_name, tc_param, result["content"])
-
                     self.messages.append(result)
 
                     if not output["is_success"]:
@@ -344,9 +485,24 @@ class LLMWorker(QThread):
                     else:
                         consecutive_errors = 0
 
-                # 连续错误检测
+                # 连续错误检测 —— 熔断机制
                 if consecutive_errors >= 3:
-                    self.status_update.emit("⚠️ 工具连续出错，强制结束...")
+                    self.status_update.emit(
+                        "[熔断] 工具连续出错！Agent 任务失败退场报告..."
+                    )
+                    fault_report = (
+                        "--- Agent 任务失败退场报告 ---\n"
+                        "底层执行工具链持续返回错误或无结果。请检查：\n"
+                        "  1. 第三方依赖是否安装完整\n"
+                        "  2. 配置文件路径是否正确\n"
+                        "  3. API 或网络连接是否正常\n"
+                        "-----------------------------"
+                    )
+                    self.ai_message.emit(
+                        f'<div style="color:#f85149;background:#2d1b1b;padding:12px;'
+                        f'border:1px solid #f85149;border-radius:6px;'
+                        f'font-family:Consolas;white-space:pre-wrap;">{fault_report}</div>'
+                    )
                     self.messages.append({
                         "role": "user",
                         "content": "系统提示：底层执行工具链持续返回错误或无结果。请不要再尝试调用任何工具，直接基于现状向用户回复说明任务为何无法完成。"
@@ -359,27 +515,27 @@ class LLMWorker(QThread):
                 # 没有工具调用 -> AI 最终文字回复
                 final_text = llm_response.content or "(无文字回复)"
                 self.ai_message.emit(final_text)
-                self.status_update.emit("✅ 回复完成")
+                self.status_update.emit("回复完成")
                 break
 
         else:
-            self.status_update.emit(f"⚠️ 达到最大对话轮数 ({self.max_turns})")
+            self.status_update.emit(f"达到最大对话轮数 ({self.max_turns})")
 
         self.finished_one_round.emit()
 
 
 # ============================================================
-#  主窗口
+#  主窗口 — VS Code 风格双栏布局
 # ============================================================
 
 class AgentWindow(QMainWindow):
-    """AI 智能体可视化主窗口"""
+    """AI 智能体可视化主窗口 —— 双栏布局 + 精致暗黑风"""
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("🤖 AI 智能体工作台")
-        self.setMinimumSize(1200, 800)
-        self.resize(1400, 900)
+        self.setWindowTitle("Agent Studio — 本地自主 Agent")
+        self.setMinimumSize(1000, 720)
+        self.resize(1280, 840)
 
         # ---------- 对话历史 ----------
         self.messages: List[Dict] = []
@@ -393,7 +549,7 @@ class AgentWindow(QMainWindow):
 
         # ---------- 构建 UI ----------
         self._setup_ui()
-        self._apply_config_to_ui()
+        self._update_status_bar()
 
         # ---------- 状态 ----------
         self.is_waiting = False
@@ -442,487 +598,657 @@ class AgentWindow(QMainWindow):
         except Exception as e:
             QMessageBox.warning(self, "保存失败", f"配置文件保存失败: {str(e)}")
 
-    def _apply_config_to_ui(self):
-        """将配置数据应用到 UI 控件"""
-        self.txtApiKey.setText(self.config_data.get("api_key", ""))
-        self.txtBaseUrl.setText(self.config_data.get("base_url", ""))
-        self.txtModel.setText(self.config_data.get("model", ""))
-        self.txtMaxTurns.setText(str(self.config_data.get("max_turns", 30)))
-
-    def _gather_config_from_ui(self):
-        """从 UI 控件收集配置"""
-        self.config_data["api_key"] = self.txtApiKey.text().strip()
-        self.config_data["base_url"] = self.txtBaseUrl.text().strip()
-        self.config_data["model"] = self.txtModel.text().strip()
-        try:
-            self.config_data["max_turns"] = int(self.txtMaxTurns.text().strip())
-        except ValueError:
-            self.config_data["max_turns"] = 30
-
     # ----------------------------------------------------------
-    #  UI 构建
+    #  UI 构建 — 双栏布局（侧边栏 + 主区域）
     # ----------------------------------------------------------
     def _setup_ui(self):
-        """构建完整的用户界面"""
+        """构建完整的用户界面 —— VS Code 风格双栏布局"""
         central = QWidget()
         self.setCentralWidget(central)
         main_layout = QVBoxLayout(central)
-        main_layout.setContentsMargins(12, 12, 12, 12)
-        main_layout.setSpacing(8)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
-        # ========== 顶部标题 ==========
-        title_bar = QLabel("🤖 AI 智能体工作台  —  可视化交互界面")
-        title_bar.setStyleSheet("""
-            font-size: 20px;
-            font-weight: bold;
-            color: #2c3e50;
-            padding: 10px 0;
-        """)
-        title_bar.setAlignment(Qt.AlignCenter)
-        main_layout.addWidget(title_bar)
+        # ========== ① 顶部系统状态栏 ==========
+        self._build_system_status(main_layout)
 
-        # ========== 配置区域（可折叠） ==========
-        self._build_config_area(main_layout)
-
-        # ========== 主内容区（分割器） ==========
+        # ========== ② 双栏主体（侧边栏 + 聊天区域）==========
         splitter = QSplitter(Qt.Horizontal)
+        splitter.setHandleWidth(1)
+        splitter.setChildrenCollapsible(False)
 
-        # 左侧：对话面板
-        left_panel = self._build_chat_panel()
-        splitter.addWidget(left_panel)
+        # 左侧面板（侧边栏）
+        self._build_side_panel(splitter)
 
-        # 右侧：工具调用状态面板
-        right_panel = self._build_tool_panel()
-        splitter.addWidget(right_panel)
+        # 右侧主区域
+        right_area = self._build_main_area()
+        splitter.addWidget(right_area)
 
-        splitter.setSizes([750, 350])
+        # 设置比例：侧边栏 200px，主区域拉伸
+        splitter.setSizes([200, 800])
+        splitter.setStretchFactor(0, 0)
+        splitter.setStretchFactor(1, 1)
+
         main_layout.addWidget(splitter, stretch=1)
 
-        # ========== 底部输入区 ==========
+        # ========== ③ 底部状态栏 ==========
+        self._build_footer(main_layout)
+
+    # ----------------------------------------------------------
+    #  ① 顶部系统状态栏
+    # ----------------------------------------------------------
+    def _build_system_status(self, parent_layout):
+        """构建顶部系统状态栏"""
+        status_bar = QLabel()
+        status_bar.setObjectName("SystemStatusBar")
+        status_bar.setTextFormat(Qt.RichText)
+        status_bar.setText(self._format_system_status())
+        status_bar.setFixedHeight(30)
+        parent_layout.addWidget(status_bar)
+        self.system_status_label = status_bar
+
+    def _format_system_status(self):
+        """格式化系统状态文本"""
+        model_name = self.config_data.get("model", "deepseek-chat")
+        api_status = "Connected" if self.config_data.get("api_key") else "Disconnected"
+        api_color = "#3fb950" if self.config_data.get("api_key") else "#f85149"
+        python_ver = f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        return (
+            f'<span style="color:{api_color};">● {api_status}</span>'
+            f' &nbsp; &nbsp; '
+            f'<span style="color:#8b949e;">Model:</span> '
+            f'<span style="color:#d2a8ff;">{model_name}</span>'
+            f' &nbsp; &nbsp; '
+            f'<span style="color:#8b949e;">Env:</span> '
+            f'<span style="color:#ffa657;">{python_ver}</span>'
+        )
+
+    # ----------------------------------------------------------
+    #  ② 侧边栏 — 类似 VS Code / Claude Code 的工具面板
+    # ----------------------------------------------------------
+    def _build_side_panel(self, parent_splitter):
+        """构建左侧工具面板"""
+        side_panel = QFrame()
+        side_panel.setObjectName("SidePanel")
+        side_panel.setFixedWidth(220)
+        side_layout = QVBoxLayout(side_panel)
+        side_layout.setContentsMargins(0, 0, 0, 0)
+        side_layout.setSpacing(0)
+
+        # --- 面板标题 ---
+        title = QLabel("EXPLORER")
+        title.setObjectName("SideTitle")
+        side_layout.addWidget(title)
+
+        # --- 工具列表区 ---
+        self.tool_tree = QTreeWidget()
+        self.tool_tree.setObjectName("ToolTree")
+        self.tool_tree.setHeaderHidden(True)
+        self.tool_tree.setIndentation(16)
+        self.tool_tree.setFrameShape(QFrame.NoFrame)
+        self._populate_tool_tree()
+        side_layout.addWidget(self.tool_tree, stretch=1)
+
+        # --- 分隔线 ---
+        divider = QFrame()
+        divider.setObjectName("SideDivider")
+        divider.setFrameShape(QFrame.HLine)
+        side_layout.addWidget(divider)
+
+        # --- 系统状态区 ---
+        status_title = QLabel("STATUS")
+        status_title.setObjectName("SideTitle")
+        side_layout.addWidget(status_title)
+
+        # API 状态
+        self.side_api_status = QLabel()
+        self.side_api_status.setObjectName("SideItem")
+        side_layout.addWidget(self.side_api_status)
+
+        # 模型信息
+        self.side_model_info = QLabel()
+        self.side_model_info.setObjectName("SideItem")
+        side_layout.addWidget(self.side_model_info)
+
+        # 工具数量
+        self.side_tool_count = QLabel()
+        self.side_tool_count.setObjectName("SideItem")
+        side_layout.addWidget(self.side_tool_count)
+
+        # --- 分隔线 ---
+        divider2 = QFrame()
+        divider2.setObjectName("SideDivider")
+        divider2.setFrameShape(QFrame.HLine)
+        side_layout.addWidget(divider2)
+
+        # --- 操作按钮区 ---
+        actions_title = QLabel("ACTIONS")
+        actions_title.setObjectName("SideTitle")
+        side_layout.addWidget(actions_title)
+
+        btn_clear_side = QPushButton("Clear Chat")
+        btn_clear_side.setObjectName("BtnTool")
+        btn_clear_side.clicked.connect(self._clear_chat)
+        btn_clear_side.setCursor(Qt.PointingHandCursor)
+        side_layout.addWidget(btn_clear_side)
+
+        btn_settings = QPushButton("Settings")
+        btn_settings.setObjectName("BtnTool")
+        btn_settings.clicked.connect(self._show_settings_dialog)
+        btn_settings.setCursor(Qt.PointingHandCursor)
+        side_layout.addWidget(btn_settings)
+
+        # 底部留白
+        side_layout.addStretch()
+
+        # 更新侧边栏信息
+        self._update_side_info()
+
+        parent_splitter.addWidget(side_panel)
+
+    def _populate_tool_tree(self):
+        """填充工具树"""
+        self.tool_tree.clear()
+
+        if not _AVAILABLE_TOOLS:
+            item = QTreeWidgetItem(["No tools loaded"])
+            item.setForeground(0, QColor("#484f58"))
+            self.tool_tree.addTopLevelItem(item)
+            return
+
+        # 按模块分组
+        groups = {}
+        for name, func in _AVAILABLE_TOOLS.items():
+            module_name = func.__module__.split(".")[-1] if func.__module__ else "other"
+            if module_name not in groups:
+                groups[module_name] = []
+            groups[module_name].append((name, func))
+
+        for module_name, tools in sorted(groups.items()):
+            group_item = QTreeWidgetItem([module_name])
+            group_item.setForeground(0, QColor("#8b949e"))
+            font = group_item.font(0)
+            font.setBold(True)
+            font.setPointSize(11)
+            group_item.setFont(0, font)
+            self.tool_tree.addTopLevelItem(group_item)
+
+            for tool_name, tool_func in sorted(tools):
+                child = QTreeWidgetItem(["  " + tool_name])
+                child.setForeground(0, QColor("#c9d1d9"))
+                child_font = child.font(0)
+                child_font.setPointSize(11)
+                child.setFont(0, child_font)
+                # 存描述为 tooltip
+                doc = tool_func.__doc__ or ""
+                child.setToolTip(0, doc[:100] if len(doc) > 100 else doc)
+                group_item.addChild(child)
+
+        self.tool_tree.expandAll()
+
+    def _update_side_info(self):
+        """更新侧边栏状态信息"""
+        api_key = self.config_data.get("api_key", "")
+        api_color = "#3fb950" if api_key else "#f85149"
+        api_text = "Connected" if api_key else "Disconnected"
+        self.side_api_status.setText(f"●  API: {api_text}")
+        self.side_api_status.setStyleSheet(f"color: {api_color}; background: transparent; padding: 4px 14px; font-size: 12px;")
+
+        model = self.config_data.get("model", "deepseek-chat")
+        self.side_model_info.setText(f"Model: {model}")
+        self.side_model_info.setStyleSheet("color: #d2a8ff; background: transparent; padding: 4px 14px; font-size: 12px;")
+
+        tool_count = len(_AVAILABLE_TOOLS)
+        self.side_tool_count.setText(f"Tools: {tool_count} loaded")
+        self.side_tool_count.setStyleSheet("color: #8b949e; background: transparent; padding: 4px 14px; font-size: 12px;")
+
+    # ----------------------------------------------------------
+    #  ③ 主区域（聊天 + 输入）
+    # ----------------------------------------------------------
+    def _build_main_area(self):
+        """构建右侧主区域"""
+        main_area = QWidget()
+        main_layout = QVBoxLayout(main_area)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        # 聊天显示区
+        self._build_chat_area(main_layout)
+
+        # 底部输入区域
         self._build_input_area(main_layout)
 
-        # ========== 状态栏 ==========
-        self.status_bar = QStatusBar()
-        self.setStatusBar(self.status_bar)
-        self.status_label = QLabel("✅ 就绪")
-        self.status_bar.addWidget(self.status_label)
+        return main_area
 
-    # ----------------------------------------------------------
-    #  配置区域
-    # ----------------------------------------------------------
-    def _build_config_area(self, parent_layout):
-        config_box = QGroupBox("⚙️ 模型配置")
-        config_layout = QGridLayout(config_box)
-        config_layout.setSpacing(8)
+    def _build_chat_area(self, parent_layout):
+        """构建中央聊天消息显示区"""
+        self.chat_display = QTextBrowser()
+        self.chat_display.setObjectName("ChatDisplay")
+        self.chat_display.setOpenExternalLinks(True)
+        self.chat_display.setReadOnly(True)
+        self.chat_display.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.chat_display.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        parent_layout.addWidget(self.chat_display, stretch=1)
 
-        # API Key
-        config_layout.addWidget(QLabel("API Key:"), 0, 0)
-        self.txtApiKey = QLineEdit()
-        self.txtApiKey.setEchoMode(QLineEdit.Password)
-        self.txtApiKey.setPlaceholderText("输入你的 API Key")
-        config_layout.addWidget(self.txtApiKey, 0, 1)
+        # 显示欢迎信息（无 emoji）
+        welcome_html = (
+            '<div style="margin: 32px 0;">'
+            '<div style="font-size: 26px; font-weight: bold; color: #58a6ff; text-align: center; '
+            'letter-spacing: 0.5px;">Agent Studio</div>'
+            '<div style="font-size: 14px; color: #484f58; text-align: center; margin-top: 8px;">'
+            'Local Autonomous Agent — 输入指令开始对话</div>'
+            '<hr style="border: none; border-top: 1px solid #2d2e31; margin: 24px 0;">'
+            '<div style="font-size: 12px; color: #484f58; text-align: center;">'
+            'Commands: <b>/clear</b> &nbsp;|&nbsp; <b>/tools</b> &nbsp;|&nbsp; <b>/status</b> &nbsp;|&nbsp; <b>/exit</b>'
+            '</div></div>'
+        )
+        self.chat_display.setHtml(welcome_html)
 
-        # Base URL
-        config_layout.addWidget(QLabel("Base URL:"), 1, 0)
-        self.txtBaseUrl = QLineEdit()
-        self.txtBaseUrl.setPlaceholderText("https://api.deepseek.com")
-        config_layout.addWidget(self.txtBaseUrl, 1, 1)
-
-        # Model
-        config_layout.addWidget(QLabel("Model:"), 2, 0)
-        self.txtModel = QLineEdit()
-        self.txtModel.setPlaceholderText("deepseek-chat")
-        config_layout.addWidget(self.txtModel, 2, 1)
-
-        # Max Turns
-        config_layout.addWidget(QLabel("最大轮数:"), 3, 0)
-        self.txtMaxTurns = QLineEdit()
-        self.txtMaxTurns.setPlaceholderText("30")
-        self.txtMaxTurns.setMaximumWidth(100)
-        config_layout.addWidget(self.txtMaxTurns, 3, 1)
-
-        # 按钮
-        btn_save = QPushButton("💾 保存配置")
-        btn_save.clicked.connect(self._on_save_config)
-        config_layout.addWidget(btn_save, 3, 2)
-
-        btn_show_key = QPushButton("👁️ 显示/隐藏")
-        btn_show_key.setObjectName("btnSetting")
-        btn_show_key.clicked.connect(self._toggle_api_key_visibility)
-        config_layout.addWidget(btn_show_key, 0, 2)
-
-        parent_layout.addWidget(config_box)
-
-    def _toggle_api_key_visibility(self):
-        if self.txtApiKey.echoMode() == QLineEdit.Password:
-            self.txtApiKey.setEchoMode(QLineEdit.Normal)
-        else:
-            self.txtApiKey.setEchoMode(QLineEdit.Password)
-
-    def _on_save_config(self):
-        self._gather_config_from_ui()
-        self._save_config()
-        QMessageBox.information(self, "保存成功", "配置已保存！")
-
-    # ----------------------------------------------------------
-    #  对话面板
-    # ----------------------------------------------------------
-    def _build_chat_panel(self):
-        panel = QWidget()
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
-
-        label = QLabel("💬 对话区")
-        label.setStyleSheet("font-size: 14px; font-weight: bold; color: #2c3e50;")
-        layout.addWidget(label)
-
-        # 消息浏览器
-        self.chat_browser = QTextBrowser()
-        self.chat_browser.setOpenExternalLinks(True)
-        self.chat_browser.setReadOnly(True)
-        self.chat_browser.setMinimumWidth(400)
-        self.chat_browser.document().setDefaultStyleSheet("""
-            body { font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif; font-size: 13px; }
-            .user-msg { background-color: #d5e8f9; padding: 8px 12px; border-radius: 8px; margin: 4px 0; }
-            .ai-msg { background-color: #f0f0f0; padding: 8px 12px; border-radius: 8px; margin: 4px 0; }
-            .tool-msg { background-color: #fef9e7; padding: 6px 10px; border-radius: 6px; margin: 2px 0; font-family: monospace; font-size: 12px; }
-            .divider { border-top: 1px solid #ddd; margin: 8px 0; }
-        """)
-        layout.addWidget(self.chat_browser, stretch=1)
-
-        return panel
-
-    # ----------------------------------------------------------
-    #  工具调用状态面板
-    # ----------------------------------------------------------
-    def _build_tool_panel(self):
-        panel = QWidget()
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
-
-        label = QLabel("🔧 工具调用日志")
-        label.setStyleSheet("font-size: 14px; font-weight: bold; color: #2c3e50;")
-        layout.addWidget(label)
-
-        self.tool_tree = QTreeWidget()
-        self.tool_tree.setHeaderLabels(["时间", "工具", "状态"])
-        self.tool_tree.setColumnWidth(0, 80)
-        self.tool_tree.setColumnWidth(1, 120)
-        self.tool_tree.setColumnWidth(2, 60)
-        self.tool_tree.setAlternatingRowColors(True)
-        self.tool_tree.setRootIsDecorated(True)
-        layout.addWidget(self.tool_tree, stretch=1)
-
-        # 清空日志按钮
-        btn_clear_log = QPushButton("🗑️ 清空日志")
-        btn_clear_log.setObjectName("btnClear")
-        btn_clear_log.clicked.connect(self.tool_tree.clear)
-        layout.addWidget(btn_clear_log)
-
-        return panel
-
-    # ----------------------------------------------------------
-    #  输入区域
-    # ----------------------------------------------------------
     def _build_input_area(self, parent_layout):
-        input_widget = QWidget()
-        input_layout = QHBoxLayout(input_widget)
-        input_layout.setContentsMargins(0, 4, 0, 4)
-        input_layout.setSpacing(8)
+        """构建底部输入区域"""
+        input_container = QWidget()
+        input_container.setObjectName("InputContainer")
+        input_layout = QHBoxLayout(input_container)
+        input_layout.setContentsMargins(0, 0, 0, 0)
+        input_layout.setSpacing(10)
 
+        # 输入框
         self.input_edit = QTextEdit()
-        self.input_edit.setPlaceholderText("输入你的问题，按 Ctrl+Enter 发送...")
-        self.input_edit.setMaximumHeight(80)
-        self.input_edit.setMinimumHeight(50)
+        self.input_edit.setObjectName("InputEdit")
+        self.input_edit.setPlaceholderText("输入指令（Enter 发送，Shift+Enter 换行）...")
+        self.input_edit.setFixedHeight(44)
         self.input_edit.setAcceptRichText(False)
         self.input_edit.installEventFilter(self)
         input_layout.addWidget(self.input_edit, stretch=1)
 
-        # 按钮组
-        btn_layout = QVBoxLayout()
-        btn_layout.setSpacing(4)
+        # 发送按钮
+        self.btn_send = QPushButton("Send")
+        self.btn_send.setObjectName("BtnSend")
+        self.btn_send.setFixedHeight(40)
+        self.btn_send.setCursor(Qt.PointingHandCursor)
+        self.btn_send.clicked.connect(self._send_message)
+        input_layout.addWidget(self.btn_send)
 
-        self.btn_send = QPushButton("🚀 发送")
-        self.btn_send.setObjectName("btnSend")
-        self.btn_send.clicked.connect(self._on_send)
-        self.btn_send.setMinimumWidth(80)
-        btn_layout.addWidget(self.btn_send)
-
-        self.btn_stop = QPushButton("⏹ 停止")
-        self.btn_stop.setObjectName("btnStop")
-        self.btn_stop.clicked.connect(self._on_stop)
-        self.btn_stop.setEnabled(False)
-        btn_layout.addWidget(self.btn_stop)
-
-        self.btn_clear = QPushButton("🗑️ 清空")
-        self.btn_clear.setObjectName("btnClear")
-        self.btn_clear.clicked.connect(self._on_clear_chat)
-        btn_layout.addWidget(self.btn_clear)
-
-        input_layout.addLayout(btn_layout)
-
-        parent_layout.addWidget(input_widget)
+        parent_layout.addWidget(input_container)
 
     # ----------------------------------------------------------
-    #  事件过滤器（支持 Ctrl+Enter 发送）
+    #  ④ 底部状态栏
+    # ----------------------------------------------------------
+    def _build_footer(self, parent_layout):
+        """构建底部状态信息栏"""
+        footer = QLabel()
+        footer.setObjectName("FooterLabel")
+        footer.setText(
+            f'<b>Enter</b> to send &nbsp;|&nbsp; <b>Shift+Enter</b> newline'
+        )
+        footer.setTextFormat(Qt.RichText)
+        footer.setFixedHeight(26)
+        parent_layout.addWidget(footer)
+
+    # ----------------------------------------------------------
+    #  事件过滤
     # ----------------------------------------------------------
     def eventFilter(self, obj, event):
-        if obj is self.input_edit:
-            if event.type() == QEvent.Type.KeyPress:
-                if event.key() == Qt.Key.Key_Return:
-                    self._on_send()
-                    return True
+        """拦截输入框键盘事件"""
+        if obj == self.input_edit and event.type() == QEvent.KeyPress:
+            key_event = event
+            if key_event.key() == Qt.Key_Return and not key_event.modifiers() & Qt.ShiftModifier:
+                self._send_message()
+                return True
+            if key_event.key() == Qt.Key_Return and key_event.modifiers() & Qt.ShiftModifier:
+                return False
         return super().eventFilter(obj, event)
 
     # ----------------------------------------------------------
-    #  核心交互逻辑
+    #  发送消息逻辑
     # ----------------------------------------------------------
-    def _on_send(self):
-        """发送用户消息"""
-        if self.is_waiting:
-            QMessageBox.information(self, "提示", "正在处理中，请等待回复完成...")
-            return
-
+    def _send_message(self):
+        """发送用户输入的消息"""
         text = self.input_edit.toPlainText().strip()
         if not text:
-            QMessageBox.information(self, "提示", "请输入内容后再发送")
             return
 
-        # 收集最新配置
-        self._gather_config_from_ui()
-
-        # 校验 API Key
-        if not self.config_data.get("api_key"):
-            QMessageBox.warning(self, "配置缺失", "请先设置 API Key！")
+        # ---- 斜杠命令拦截 ----
+        if text.startswith("/"):
+            self._handle_slash_command(text)
+            self.input_edit.clear()
             return
 
-        # 显示用户消息
-        self._append_user_message(text)
-
-        # 添加到消息历史
-        self.messages.append({"role": "user", "content": text})
+        # ---- 正在处理中，禁止重复发送 ----
+        if self.is_waiting:
+            return
 
         # 清空输入框
         self.input_edit.clear()
 
-        # 切换状态
-        self._set_waiting_state(True)
+        # 在聊天区域显示用户消息
+        user_html = self._format_user_message(text)
+        self._append_to_chat(user_html)
+
+        # 将用户消息加入对话历史
+        self.messages.append({"role": "user", "content": text})
+
+        # 锁定输入
+        self._set_input_enabled(False)
 
         # 启动后台线程
+        self._start_worker()
+
+    def _set_input_enabled(self, enabled: bool):
+        """锁定/解锁输入控件"""
+        self.is_waiting = not enabled
+        self.input_edit.setEnabled(enabled)
+        self.btn_send.setEnabled(enabled)
+        if enabled:
+            self.input_edit.setPlaceholderText("输入指令（Enter 发送，Shift+Enter 换行）...")
+            self.input_edit.setFocus()
+        else:
+            self.input_edit.setPlaceholderText("Agent 正在处理中，请稍候...")
+
+    # ----------------------------------------------------------
+    #  斜杠命令处理
+    # ----------------------------------------------------------
+    def _handle_slash_command(self, text: str):
+        """处理斜杠命令"""
+        cmd = text.lower().strip()
+
+        if cmd == "/clear":
+            self._clear_chat()
+
+        elif cmd == "/tools":
+            self._show_tools()
+
+        elif cmd == "/status":
+            self._show_status()
+
+        elif cmd == "/exit":
+            self.close()
+
+        else:
+            self._append_to_chat(
+                f'<div style="color:#d29922;background:#2d2b1b;padding:8px 12px;'
+                f'border-radius:6px;margin:4px 0;font-size:13px;">'
+                f'Unknown command: <b>{text}</b><br>'
+                f'Available: /clear, /tools, /status, /exit'
+                f'</div>'
+            )
+
+    def _clear_chat(self):
+        """清空聊天记录"""
+        self.chat_display.clear()
+        welcome_html = (
+            '<div style="margin: 24px 0;">'
+            '<div style="font-size: 24px; font-weight: bold; color: #58a6ff; text-align: center;">'
+            'Agent Studio</div>'
+            '<div style="font-size: 14px; color: #484f58; text-align: center; margin-top: 6px;">'
+            'Chat cleared — 开始新的会话</div>'
+            '</div>'
+        )
+        self.chat_display.setHtml(welcome_html)
+        self._init_system_message()
+
+    def _show_tools(self):
+        """显示可用工具列表"""
+        if not _AVAILABLE_TOOLS:
+            self._append_to_chat(
+                '<div style="color:#d29922;padding:8px;font-size:13px;">'
+                '当前没有加载任何可用工具。</div>'
+            )
+            return
+
+        tool_list = "".join(
+            f'<tr><td style="color:#58a6ff;padding:4px 12px;font-family:Consolas,monospace;">'
+            f'{name}</td>'
+            f'<td style="color:#8b949e;padding:4px 12px;">{func.__doc__ or "No description"}</td></tr>'
+            for name, func in _AVAILABLE_TOOLS.items()
+        )
+
+        table_html = (
+            '<div style="background:#212226;border:1px solid #343539;border-radius:8px;'
+            'padding:12px;margin:8px 0;box-shadow: 0 1px 3px rgba(0,0,0,0.3);">'
+            '<div style="color:#58a6ff;font-weight:bold;font-size:14px;margin-bottom:8px;">'
+            'Available Tools</div>'
+            f'<table style="width:100%;font-size:12px;">{tool_list}</table>'
+            '</div>'
+        )
+        self._append_to_chat(table_html)
+
+    def _show_status(self):
+        """显示系统状态"""
+        status_lines = [
+            ("API Status", "Connected" if self.config_data.get("api_key") else "Disconnected"),
+            ("API URL", self.config_data.get("base_url", "Not set")),
+            ("Model", self.config_data.get("model", "Not set")),
+            ("Max Turns", str(self.config_data.get("max_turns", 30))),
+            ("Working Dir", os.getcwd()),
+            ("Messages", str(len(self.messages))),
+            ("Tools Loaded", str(len(_AVAILABLE_TOOLS))),
+        ]
+
+        rows = "".join(
+            f'<tr><td style="color:#8b949e;padding:3px 10px;">{k}</td>'
+            f'<td style="color:#ffa657;padding:3px 10px;">{v}</td></tr>'
+            for k, v in status_lines
+        )
+
+        status_html = (
+            '<div style="background:#212226;border:1px solid #343539;border-radius:8px;'
+            'padding:12px;margin:8px 0;box-shadow: 0 1px 3px rgba(0,0,0,0.3);">'
+            '<div style="color:#58a6ff;font-weight:bold;font-size:14px;margin-bottom:8px;">'
+            'System Status</div>'
+            f'<table style="width:100%;font-size:12px;">{rows}</table>'
+            '</div>'
+        )
+        self._append_to_chat(status_html)
+
+    # ----------------------------------------------------------
+    #  设置对话框
+    # ----------------------------------------------------------
+    def _show_settings_dialog(self):
+        """显示设置对话框"""
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle("Settings")
+        dialog.setText(
+            f"API URL: {self.config_data.get('base_url', 'Not set')}\n"
+            f"Model: {self.config_data.get('model', 'Not set')}\n"
+            f"Max Turns: {self.config_data.get('max_turns', 30)}\n\n"
+            f"To change settings, edit agent_config.json"
+        )
+        dialog.setIcon(QMessageBox.Information)
+        dialog.exec()
+
+    # ----------------------------------------------------------
+    #  启动工作线程
+    # ----------------------------------------------------------
+    def _start_worker(self):
+        """启动 LLM 后台工作线程"""
+        if self.worker and self.worker.isRunning():
+            self.worker.stop()
+            self.worker.wait(2000)
+
         self.worker = LLMWorker(
-            api_key=self.config_data["api_key"],
-            base_url=self.config_data["base_url"],
-            model=self.config_data["model"],
+            api_key=self.config_data.get("api_key", ""),
+            base_url=self.config_data.get("base_url", ""),
+            model=self.config_data.get("model", "deepseek-chat"),
             messages=self.messages,
             tools_config=_TOOLS_CONFIG,
             available_tools=_AVAILABLE_TOOLS,
             max_turns=self.config_data.get("max_turns", 30)
         )
-        self.worker.response_received.connect(self._on_llm_response)
-        self.worker.tool_called.connect(self._on_tool_called)
-        self.worker.ai_message.connect(self._on_ai_final_message)
-        self.worker.error_occurred.connect(self._on_error)
+
+        # 连接信号
         self.worker.status_update.connect(self._on_status_update)
-        self.worker.finished_one_round.connect(self._on_round_finished)
+        self.worker.tool_called.connect(self._on_tool_called)
+        self.worker.ai_message.connect(self._on_ai_message)
+        self.worker.error_occurred.connect(self._on_error)
+        self.worker.finished_one_round.connect(self._on_finished)
+
         self.worker.start()
 
-    def _on_stop(self):
-        """停止当前对话"""
-        if self.worker and self.worker.isRunning():
-            self.worker.stop()
-            self.worker.quit()
-            self.worker.wait()
-            self._append_system_message("⏸️ 用户手动停止了对话")
-            self._set_waiting_state(False)
-            self.status_label.setText("⏸️ 已停止")
+    # ----------------------------------------------------------
+    #  信号处理槽函数
+    # ----------------------------------------------------------
+    def _on_status_update(self, status_text: str):
+        """状态更新"""
+        color = "#79c0ff"  # 默认蓝色（思考状态）
+        if "工具" in status_text or "tool" in status_text.lower():
+            color = "#58a6ff"
+        elif "完成" in status_text or "成功" in status_text:
+            color = "#3fb950"
+        elif "错误" in status_text or "熔断" in status_text or "失败" in status_text:
+            color = "#f85149"
+        elif "达到" in status_text:
+            color = "#d29922"
 
-    def _on_clear_chat(self):
-        """清空对话"""
-        if self.is_waiting:
-            QMessageBox.information(self, "提示", "请等待当前对话结束再清空")
-            return
-
-        reply = QMessageBox.question(
-            self, "确认清空", "确定要清空所有对话记录吗？",
-            QMessageBox.Yes | QMessageBox.No
+        html = (
+            f'<div style="color:{color};font-size:12px;padding:3px 0;'
+            f'font-family:Consolas,monospace;">'
+            f'{status_text}</div>'
         )
-        if reply == QMessageBox.Yes:
-            self.chat_browser.clear()
-            self.tool_tree.clear()
-            self.messages.clear()
-            self._init_system_message()
-            self.status_label.setText("✅ 对话已清空")
+        self._append_to_chat(html)
 
-    # ----------------------------------------------------------
-    #  状态切换
-    # ----------------------------------------------------------
-    def _set_waiting_state(self, waiting: bool):
-        self.is_waiting = waiting
-        self.btn_send.setEnabled(not waiting)
-        self.btn_stop.setEnabled(waiting)
-        self.input_edit.setEnabled(not waiting)
-        if waiting:
-            self.input_edit.setPlaceholderText("⏳ AI 正在思考中...")
-        else:
-            self.input_edit.setPlaceholderText("输入你的问题，按 Ctrl+Enter 发送...")
-
-    # ----------------------------------------------------------
-    #  信号处理
-    # ----------------------------------------------------------
-    def _on_llm_response(self, response):
-        """收到 LLM 回复（可能有工具调用）"""
-        if hasattr(response, 'content') and response.content:
-            # 这里不重复显示，等最终 AI 消息
-            pass
+        # 同步更新系统状态栏
+        self.system_status_label.setText(
+            f'<span style="color:#79c0ff;">● Working</span>'
+            f' &nbsp; &nbsp; {status_text[:60]}'
+        )
 
     def _on_tool_called(self, tool_name: str, params: str, result: str):
-        """工具被调用"""
-        now = datetime.now().strftime("%H:%M:%S")
-
-        # 工具树
-        item = QTreeWidgetItem([now, tool_name, "✅ 成功"])
-        item.setForeground(2, QColor("#27ae60"))
-
-        # 展开查看参数和结果
-        param_item = QTreeWidgetItem(["", "参数", params[:120] + ("..." if len(params) > 120 else "")])
-        param_item.setForeground(1, QColor("#8e44ad"))
-        item.addChild(param_item)
-
-        result_preview = result[:150] + ("..." if len(result) > 150 else "")
-        result_item = QTreeWidgetItem(["", "结果", result_preview])
-        result_item.setForeground(1, QColor("#d35400"))
-        item.addChild(result_item)
-
-        self.tool_tree.addTopLevelItem(item)
-        self.tool_tree.expandItem(item)
-
-        # 在聊天区也显示工具调用
-        self._append_tool_message(tool_name, params, result)
-
-        self.status_label.setText(f"🔧 工具: {tool_name}")
-
-    def _on_ai_final_message(self, text: str):
-        """AI 最终文字回复"""
-        self._append_ai_message(text)
-        self.status_label.setText("✅ AI 回复完成")
-
-    def _on_error(self, error_msg: str):
-        """发生错误"""
-        self._append_system_message(f"❌ {error_msg}")
-        self.status_label.setText(f"❌ {error_msg}")
-
-    def _on_status_update(self, status: str):
-        """状态更新"""
-        self.status_label.setText(status)
-
-    def _on_round_finished(self):
-        """一轮对话结束"""
-        self._set_waiting_state(False)
-        self.status_label.setText("✅ 就绪，可以继续对话")
-
-    # ----------------------------------------------------------
-    #  消息渲染（富文本）
-    # ----------------------------------------------------------
-    def _append_user_message(self, text: str):
-        """追加用户消息到聊天区"""
-        html = f"""
-        <div class="user-msg">
-            <b style="color:#2980b9;">🧑 你</b>
-            <p style="margin:4px 0 0 0;">{self._escape_html(text)}</p>
-        </div>
-        <hr class="divider">
-        """
-        self.chat_browser.append(html)
-        self._scroll_to_bottom()
-
-    def _append_ai_message(self, text: str):
-        """追加 AI 消息"""
-        html = f"""
-        <div class="ai-msg">
-            <b style="color:#27ae60;">🤖 AI 助手</b>
-            <p style="margin:4px 0 0 0;">{self._escape_html(text)}</p>
-        </div>
-        <hr class="divider">
-        """
-        self.chat_browser.append(html)
-        self._scroll_to_bottom()
-
-    def _append_tool_message(self, tool_name: str, params: str, result: str):
-        """追加工具调用消息"""
+        """工具调用反馈"""
         try:
-            params_pretty = json.dumps(json.loads(params), ensure_ascii=False, indent=2)
+            params_obj = json.loads(params)
+            params_str = json.dumps(params_obj, ensure_ascii=False, indent=2)
         except Exception:
-            params_pretty = params
+            params_str = params
 
-        html = f"""
-        <div class="tool-msg">
-            <b style="color:#8e44ad;">🔧 工具调用: {self._escape_html(tool_name)}</b>
-            <details>
-                <summary style="cursor:pointer; color:#3498db;">查看详情</summary>
-                <pre style="background:#f8f9fa; padding:8px; border-radius:4px; margin:4px 0; font-size:11px; white-space:pre-wrap;">
-参数:
-{self._escape_html(params_pretty)}
+        result_display = result[:300] + "..." if len(result) > 300 else result
 
-结果:
-{self._escape_html(result)}
-                </pre>
-            </details>
-        </div>
-        """
-        self.chat_browser.append(html)
-        self._scroll_to_bottom()
+        is_success = not ("错误" in result or "failed" in result.lower() or "不可用" in result)
+        result_color = "#3fb950" if is_success else "#f85149"
+        status_tag = "SUCCESS" if is_success else "FAILED"
 
-    def _append_system_message(self, text: str):
-        """追加系统消息"""
-        html = f"""
-        <div style="text-align:center; color:#7f8c8d; font-size:12px; padding:4px 0;">
-            ⚙️ {self._escape_html(text)}
-        </div>
-        <hr class="divider">
-        """
-        self.chat_browser.append(html)
-        self._scroll_to_bottom()
+        html = (
+            f'<div style="background:#212226;border:1px solid #343539;border-radius:8px;'
+            f'padding:10px 12px;margin:6px 0;font-family:Consolas,monospace;font-size:12px;'
+            f'box-shadow: 0 1px 2px rgba(0,0,0,0.2);">'
+            f'<div style="color:#58a6ff;font-weight:bold;">[Tool] {tool_name}</div>'
+            f'<div style="color:#484f58;margin:4px 0;">'
+            f'  Args: <span style="color:#ffa657;">{params_str}</span></div>'
+            f'<div style="color:{result_color};margin:4px 0;">'
+            f'  [{status_tag}] <span>{result_display}</span></div>'
+            f'</div>'
+        )
+        self._append_to_chat(html)
 
-    @staticmethod
-    def _escape_html(text: str) -> str:
-        """转义 HTML 特殊字符"""
-        if not text:
-            return ""
-        text = text.replace("&", "&amp;")
-        text = text.replace("<", "&lt;")
-        text = text.replace(">", "&gt;")
-        text = text.replace('"', "&quot;")
-        text = text.replace("'", "&#x27;")
-        # 换行转 <br>
-        text = text.replace("\n", "<br>")
-        return text
+    def _on_ai_message(self, message: str):
+        """AI 最终文字回复"""
+        if "```" in message:
+            formatted = self._format_code_blocks(message)
+            html = (
+                f'<div style="color:#c9d1d9;font-size:14px;line-height:1.7;'
+                f'padding:8px 0;">'
+                f'<div style="color:#58a6ff;font-weight:bold;margin-bottom:6px;">AI:</div>'
+                f'{formatted}</div>'
+            )
+        else:
+            html = (
+                f'<div style="color:#c9d1d9;font-size:14px;line-height:1.7;'
+                f'padding:8px 0;">'
+                f'<div style="color:#58a6ff;font-weight:bold;margin-bottom:6px;">AI:</div>'
+                f'{message}</div>'
+            )
+        self._append_to_chat(html)
 
-    def _scroll_to_bottom(self):
-        """滚动聊天区到底部"""
-        scrollbar = self.chat_browser.verticalScrollBar()
+    def _format_code_blocks(self, text: str) -> str:
+        """将代码块包装为带背景色的 HTML 矩形框"""
+        pattern = r'```(\w*)\n(.*?)```'
+
+        def replace_code(match):
+            lang = match.group(1) or "code"
+            code = match.group(2)
+            code = (
+                code.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+            )
+            return (
+                f'<div style="background:#161719;border:1px solid #343539;'
+                f'border-radius:8px;padding:14px;margin:10px 0;font-family:Consolas,monospace;'
+                f'font-size:12px;white-space:pre-wrap;overflow-x:auto;'
+                f'box-shadow: 0 2px 4px rgba(0,0,0,0.3);">'
+                f'<div style="color:#8b949e;font-size:11px;margin-bottom:6px;">'
+                f'{lang}</div>'
+                f'<code style="color:#c9d1d9;">{code}</code>'
+                f'</div>'
+            )
+
+        formatted = re.sub(pattern, replace_code, text, flags=re.DOTALL)
+        formatted = formatted.replace("\n", "<br>")
+        return formatted
+
+    def _on_error(self, error_text: str):
+        """错误信息显示"""
+        html = (
+            f'<div style="color:#f85149;background:#2d1b1b;border:1px solid #f85149;'
+            f'border-radius:8px;padding:10px 12px;margin:6px 0;font-size:13px;'
+            f'font-family:Consolas,monospace;">'
+            f'{error_text}</div>'
+        )
+        self._append_to_chat(html)
+
+    def _on_finished(self):
+        """对话轮次结束，解锁输入"""
+        self._set_input_enabled(True)
+        self.system_status_label.setText(self._format_system_status())
+        self._update_side_info()
+        self.input_edit.setFocus()
+
+    # ----------------------------------------------------------
+    #  辅助方法
+    # ----------------------------------------------------------
+    def _append_to_chat(self, html: str):
+        """向聊天显示区追加 HTML 内容"""
+        cursor = self.chat_display.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        self.chat_display.setTextCursor(cursor)
+        self.chat_display.insertHtml(html)
+        # 添加分隔线
+        self.chat_display.insertHtml(
+            '<hr style="border: none; border-top: 1px solid #212226; margin: 4px 0;">'
+        )
+        # 滚动到底部
+        scrollbar = self.chat_display.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
-    # ----------------------------------------------------------
-    #  窗口居中
-    # ----------------------------------------------------------
+    def _format_user_message(self, text: str) -> str:
+        """格式化用户消息为 HTML"""
+        return (
+            f'<div style="color:#c9d1d9;font-size:14px;line-height:1.7;padding:8px 0;">'
+            f'<div style="color:#ffa657;font-weight:bold;margin-bottom:4px;">You:</div>'
+            f'{text}</div>'
+        )
+
+    def _update_status_bar(self):
+        """更新系统状态栏"""
+        self.system_status_label.setText(self._format_system_status())
+
     def _center_on_screen(self):
-        screen = QApplication.primaryScreen().geometry()
-        x = (screen.width() - self.width()) // 2
-        y = (screen.height() - self.height()) // 2
-        self.move(x, y)
+        """将窗口居中显示"""
+        screen = QApplication.primaryScreen()
+        if screen:
+            center = screen.availableGeometry().center()
+            frame = self.frameGeometry()
+            frame.moveCenter(center)
+            self.move(frame.topLeft())
 
     # ----------------------------------------------------------
     #  窗口关闭事件
     # ----------------------------------------------------------
     def closeEvent(self, event):
-        """关闭时终止后台线程"""
+        """关闭窗口时清理线程"""
         if self.worker and self.worker.isRunning():
             self.worker.stop()
-            self.worker.quit()
-            self.worker.wait()
-        self._save_config()
+            self.worker.wait(3000)
         event.accept()
 
 
@@ -931,16 +1257,11 @@ class AgentWindow(QMainWindow):
 # ============================================================
 
 def main():
-    # 环境变量（兼容原有逻辑）
-    os.environ['PADDLE_PDX_HOME'] = os.environ.get(
-        'PADDLE_PDX_HOME',
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), '.paddlex')
-    )
-    os.environ['PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK'] = "True"
-
     app = QApplication(sys.argv)
     app.setStyleSheet(STYLE_SHEET)
-    app.setFont(QFont("Microsoft YaHei", 10))
+
+    app.setApplicationName("Agent Studio — 本地自主 Agent")
+    app.setApplicationDisplayName("Agent Studio")
 
     window = AgentWindow()
     window.show()
