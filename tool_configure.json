@@ -1200,5 +1200,83 @@
         ]
       }
     }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "read_user_memory",
+      "description": "读取用户记忆文档。获取智能体对用户的个性化记忆数据，包括用户档案、偏好设置、交互历史、知识库等。支持按分类读取或读取全部。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "记忆类别，可选值: 'profile'(用户档案)、'preferences'(偏好设置)、'history'(交互历史)、'knowledge'(知识库)。留空或传空字符串则读取全部记忆。",
+            "enum": [
+              "",
+              "profile",
+              "preferences",
+              "history",
+              "knowledge"
+            ]
+          }
+        },
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "update_user_memory",
+      "description": "更新用户记忆。当发现用户新的偏好、习惯、个人信息或重要知识点时调用此函数记录。采用增量追加模式，不会覆盖已有内容。每个分类容量上限5000字符。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "记忆类别: 'profile'(用户档案)、'preferences'(偏好设置)、'history'(交互历史)、'knowledge'(知识库)",
+            "enum": [
+              "profile",
+              "preferences",
+              "history",
+              "knowledge"
+            ]
+          },
+          "content": {
+            "type": "string",
+            "description": "要记录的记忆内容（markdown格式）。例如：'- 用户偏好使用Python进行数据分析\n- 用户姓名：张三'"
+          }
+        },
+        "required": [
+          "category",
+          "content"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "list_memory_categories",
+      "description": "列出所有可用的记忆分类及其当前状态（有数据/待填充）。用于快速了解哪些记忆类别已有内容。",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "consolidate_memory_summary",
+      "description": "生成精炼的用户记忆摘要。自动从所有记忆文件中提取关键信息，压缩为精简摘要（≤1000字符）。适用于注入系统提示词上下文。",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
   }
 ]
