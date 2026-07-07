@@ -139,15 +139,22 @@ if __name__ == "__main__":
 
         purified_messages = []
         for msg in messages:
-            if msg.get("role") in ["system","user"]:
-                purified_messages.append(msg)
-            elif msg.get("role") == "assistant" and not hasattr(msg, 'tool_calls') and getattr(msg, 'content', None):
-                purified_messages.append({
-                    "role": "assistant",
-                    "content": msg.content
-                })
-            elif isinstance(msg, dict) and msg.get("role") == "assistant" and not msg.get("tool_calls") and msg.get("content"):
-                purified_messages.append(msg)
+            if isinstance(msg, dict):
+                role = msg.get("role")
+                content = msg.get("content")
+                tool_calls = msg.get("tool_calls")
+                if role in ["system", "user"]:
+                    purified_messages.append(msg)
+                elif role == "assistant" and not tool_calls and content:
+                    purified_messages.append(msg)
+            else:
+                role = getattr(msg, "role", None)
+                content = getattr(msg, "content", None)
+                tool_calls = getattr(msg, "tool_calls", None)
+                if role in ["system", "user"]:
+                    purified_messages.append({"role": role, "content": content})
+                elif role == "assistant" and not tool_calls and content:
+                    purified_messages.append({"role": role, "content": content})
 
         if len(purified_messages) > 12:
             print("系统提示：对话历史过长，已清理为最近的12条消息。")
