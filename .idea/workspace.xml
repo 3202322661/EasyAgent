@@ -4,13 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5efb2802-cf91-45ab-8450-bd60c80c73f6" name="更改" comment="添加ppt_tool">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main-agent.py" beforeDir="false" afterPath="$PROJECT_DIR$/main-agent.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tool_configure.json" beforeDir="false" afterPath="$PROJECT_DIR$/tool_configure.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/bash_tool.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/bash_tool.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/ppt_tool.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/ppt_tool.py" afterDir="false" />
-    </list>
+    <list default="true" id="5efb2802-cf91-45ab-8450-bd60c80c73f6" name="更改" comment="添加ppt_tool" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
