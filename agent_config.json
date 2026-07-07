@@ -1,6 +1,0 @@
-{
-  "api_key": "sk-46687f951a1e4938ae65c31e4ff10edc",
-  "base_url": "https://api.deepseek.com",
-  "model": "deepseek-v4-flash",
-  "max_turns": 30
-}
