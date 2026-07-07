@@ -9,6 +9,7 @@
     <img src="https://img.shields.io/badge/Tavily-Search-orange?style=flat" alt="Tavily">
     <img src="https://img.shields.io/badge/OCR-PaddleOCR%20%7C%20Tesseract-blueviolet" alt="OCR">
     <img src="https://img.shields.io/badge/Word-python--docx-green" alt="python-docx">
+    <img src="https://img.shields.io/badge/UI-PySide6%20%7C%20PyQt5-brightgreen" alt="UI">
     <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
   </p>
 </p>
@@ -17,9 +18,39 @@
 
 ## 📋 项目简介
 
-**Easy Agents** 是一个基于大语言模型（LLM）的轻量级智能体（Agent）框架。用户只需输入**自然语言指令**，系统便会自动理解意图、规划任务、调用工具并返回结果。支持天气查询、旅游推荐、代码文件操作、Word 文档自动化、图片 OCR 文字识别等功能，开箱即用。
+**Easy Agents** 是一个基于大语言模型（LLM）的轻量级智能体（Agent）框架。用户只需输入**自然语言指令**，系统便会自动理解意图、规划任务、调用工具并返回结果。
+
+提供 **命令行** 和 **图形界面** 两种交互方式，开箱即用。支持天气查询、旅游推荐、代码文件操作、Word 文档自动化、图片 OCR 文字识别、Git 快捷操作、运行脚本与测试等多种功能。
 
 > 💡 **核心理念**：让大模型成为你的"智能助手"，通过工具调用连接真实世界。
+
+---
+
+## 🚀 双模式运行
+
+### 模式一：命令行交互（`main-agent.py`）
+
+轻量级终端交互，适合快速测试和脚本化使用。
+
+```bash
+python main-agent.py
+```
+
+### 模式二：可视化工作台（`main-window.py`）
+
+基于 **PySide6/PyQt5** 构建的图形界面，提供更直观的操作体验。
+
+```bash
+python main-window.py
+```
+
+**界面特性：**
+- 🎨 现代化 UI 风格（亮色/暗色混合设计）
+- 💬 聊天式对话面板，实时展示 AI 回复
+- 🔧 右侧面板实时展示工具调用过程（工具名、参数、结果）
+- ⚙️ 内嵌配置面板，可视化设置 API Key、模型、地址等
+- 📋 工具调用日志树状展示
+- 🛑 支持中断（Stop）当前对话
 
 ---
 
@@ -32,6 +63,8 @@
 | 📂 **文件操作** | 列出目录树、读写代码文件（UTF-8，自动截断过长内容） | _"读取 main-agent.py 的内容"_ |
 | 📝 **Word 文档** | 创建/编辑文档，添加段落、标题、表格、分页符，设置字体与段落格式 | _"创建一个项目报告文档"_ |
 | 🖼️ **图片 OCR** | 识别图片中的文字（支持中文/英文/数字），读取图片基本信息 | _"识别这张图片中的文字"_ |
+| 💻 **终端命令** | 在项目目录下执行 bash 命令，运行 Python 脚本 | _"运行测试用例"_ |
+| 🔄 **Git 快捷操作** | 一键完成 git add、commit、push | _"把代码推送到远程仓库"_ |
 
 ---
 
@@ -39,14 +72,18 @@
 
 ```
 .
-├── main-agent.py              # 🧠 主程序入口（LLM对话循环 + 工具调度）
-├── tool_configure.json        # ⚙️ 工具函数定义（OpenAI Tool 格式）
-├── README.md                  # 📖 项目说明
-├── tools/                     # 🔧 工具模块目录（自动加载）
-│   ├── travel_tool.py         #   ├── 🌤️ 天气查询 & 旅游推荐
-│   ├── code_tool.py           #   ├── 📂 代码 / 文件操作
-│   ├── word_tool.py           #   ├── 📝 Word 文档生成与格式编辑
-│   └── image_tool.py          #   └── 🖼️ 图片 OCR 识别与信息提取
+├── main-agent.py               # 🧠 主程序入口（命令行版 - LLM对话循环 + 工具调度）
+├── main-window.py              # 🖥️ 主程序入口（图形界面版 - PySide6 可视化工作台）
+├── agent_config.json           # ⚙️ GUI 配置持久化文件（API Key / 模型 / 地址等）
+├── tool_configure.json         # 🔧 工具函数定义（OpenAI Function Calling 格式）
+├── README.md                   # 📖 项目说明
+│
+└── tools/                      # 📦 工具模块目录（自动加载）
+    ├── travel_tool.py          #   ├── 🌤️ 天气查询 & 旅游推荐
+    ├── code_tool.py            #   ├── 📂 代码 / 文件操作
+    ├── word_tool.py            #   ├── 📝 Word 文档生成与格式编辑
+    ├── image_tool.py           #   ├── 🖼️ 图片 OCR 识别与信息提取
+    └── bash_tool.py            #   └── 💻 终端命令执行 & Git 快捷操作
 ```
 
 ### 架构亮点
@@ -56,6 +93,7 @@
 - **标准协议**：工具定义遵循 OpenAI Function Calling 规范，兼容 DeepSeek / GPT 等模型
 - **容错处理**：工具执行失败不会中断主流程，返回错误信息供模型继续决策
 - **连续错误熔断**：工具连续失败 3 次后自动终止工具链，强制模型给出最终回复，避免死循环
+- **双模式运行**：命令行版适合快速调试，GUI 版提供完整可视化体验
 
 ---
 
@@ -88,17 +126,26 @@
 | 函数名 | 功能 |
 |--------|------|
 | `create_word_document(file_path, title)` | 创建空白 Word 文档，可选居中标题 |
-| `add_paragraph(file_path, text, style, font_name, font_size, bold, italic, underline, color, alignment, line_spacing, space_before, space_after, first_line_indent)` | 添加段落，支持完整的字体格式和段落排版设置 |
-| `add_heading(file_path, text, level, font_name, font_size, color, alignment)` | 添加 1~9 级标题，支持自定义字体、字号、颜色和对齐 |
-| `add_table(file_path, data, headers, font_name, font_size, bold_header, alignment)` | 添加带边框的表格（Table Grid 样式） |
+| `add_paragraph(file_path, text, ...)` | 添加段落，支持完整的字体格式和段落排版设置（字体、字号、加粗、斜体、颜色、对齐、行距、缩进等） |
+| `add_heading(file_path, text, level, ...)` | 添加 1~9 级标题，支持自定义字体、字号、颜色和对齐 |
+| `add_table(file_path, data, headers, ...)` | 添加带边框的表格（Table Grid 样式） |
 | `add_page_break(file_path)` | 添加分页符 |
 | `read_word_text(file_path)` | 读取文档纯文本（带段落编号与样式名称） |
 | `read_word_tables(file_path)` | 提取文档中的所有表格数据 |
 | `read_word_info(file_path)` | 获取文档概要信息（段落数、表格数、样式列表） |
-| `set_paragraph_format(file_path, paragraph_index, alignment, line_spacing, space_before, space_after, first_line_indent, left_indent, right_indent)` | 调整段落排版格式，可指定单个段落或全部段落 |
-| `set_run_format(file_path, paragraph_index, font_name, font_size, bold, italic, underline, color)` | 调整指定段落的字体格式 |
-| `set_page_margins(file_path, top, bottom, left, right)` | 设置页面边距（单位：英寸） |
+| `set_paragraph_format(file_path, ...)` | 调整段落排版格式，可指定单个段落或全部段落 |
+| `set_run_format(file_path, ...)` | 调整指定段落的字体格式 |
+| `set_page_margins(file_path, ...)` | 设置页面边距（单位：英寸） |
 | `list_doc_styles(file_path)` | 列出文档中所有可用样式 |
+
+### 💻 Bash 工具（`bash_tool.py`）
+
+| 函数名 | 功能 |
+|--------|------|
+| `run_bash_command(command, timeout)` | 在项目根目录执行 bash 命令，返回标准输出/错误和返回码，支持超时控制 |
+| `git_quick_commit_push(branch, message)` | 一键完成 `git add .` → `git commit` → `git push` |
+| `run_python_script(script_path, args)` | 运行指定的 Python 脚本，支持传递命令行参数 |
+| `run_tests(test_path, extra_args)` | 运行 pytest 测试，支持指定测试路径和额外参数 |
 
 ---
 
@@ -107,11 +154,16 @@
 ### 环境要求
 
 - Python 3.8+
-- 依赖库：`openai`, `requests`, `tavily-python`, `python-docx`, `Pillow`
+- 基础依赖：`openai`, `requests`, `tavily-python`, `python-docx`, `Pillow`
+- GUI 版本额外依赖：`PySide6`（或 `PyQt5`）
 
 ```bash
 # 安装基础依赖
 pip install openai requests tavily-python python-docx Pillow
+
+# GUI 版本需额外安装
+pip install PySide6
+# 或使用 PyQt5: pip install PyQt5
 ```
 
 ### OCR 引擎安装（可选，图片识别需要）
@@ -128,11 +180,11 @@ pip install pytesseract
 pip install paddlepaddle paddleocr
 ```
 
-> 💡 两种 OCR 引擎任选其一即可。系统会自动检测可用引擎，优先使用 pytesseract。
+> 💡 两种 OCR 引擎任选其一即可。系统会自动检测可用引擎，优先使用 pytesseract，失败时自动降级到 PaddleOCR。
 
 ### 配置
 
-本项目通过**环境变量**完成配置，支持以下参数：
+本项目通过**环境变量**完成核心配置，GUI 版本还支持通过界面面板修改并持久化到 `agent_config.json`：
 
 ```bash
 # ===== LLM 配置（必填）=====
@@ -146,11 +198,11 @@ export HTTP_PROXY="http://127.0.0.1:7890"     # HTTP 代理
 export HTTPS_PROXY="http://127.0.0.1:7890"    # HTTPS 代理
 ```
 
-也可以在 `main-agent.py` 中直接修改默认值（不推荐）：
+也可以在 `main-agent.py` 中直接修改默认值：
 
 ```python
 API_KEY = os.environ.get("DEEPSEEK_API_KEY")   # 优先读取环境变量
-BASE_URL = "https://api.deepseek.com"           # API 服务地址
+BASE_URL = "https://api.deepseek.com"           # API 服务地址（可切换为 OpenAI / 其他）
 MODEL_ID = "deepseek-v4-flash"                  # 模型名称
 ```
 
@@ -159,27 +211,37 @@ MODEL_ID = "deepseek-v4-flash"                  # 模型名称
 ### 运行
 
 ```bash
+# 命令行模式
 python main-agent.py
+
+# 图形界面模式
+python main-window.py
 ```
 
-进入交互模式后，直接输入自然语言指令即可：
+#### 命令行交互示例
 
 ```
 User: 北京今天天气怎么样？
 🤖 → 北京天气：多云，温度：12°C，湿度：45%，风速：15 km/h
 
 User: 北京下雨了，推荐一些室内的景点
-🤖 → 【搜索中...】推荐故宫博物院、国家博物馆、798艺术区...（理由详见输出）
+🤖 → 【搜索中...】推荐故宫博物院、国家博物馆、798艺术区...
 
 User: 创建一个Word文档，标题为"我的旅游计划"
 🤖 → ✓ Word 文档已创建: '我的旅游计划.docx'
 
 User: 识别这张图片中的文字
 🤖 → ━━━ OCR 识别结果 ━━━
-      文件: 培训会议流程图.jpg
+      文件: 会议记录.png
       识别引擎: pytesseract
       识别文本行数: 15
       ...
+
+User: 运行所有的测试用例
+🤖 → 命令执行成功！[返回码] 0
+
+User: 把代码推送到远程仓库
+🤖 → 命令执行成功！已推送至 origin/main
 
 输入 exit 或 quit 退出程序。
 ```
@@ -216,19 +278,24 @@ def my_custom_function(param1: str, param2: int) -> str:
 
 在受限网络环境下，可通过设置 `HTTP_PROXY` / `HTTPS_PROXY` 环境变量使天气查询等 HTTP 请求正常通行。
 
+### GUI 配置持久化
+
+图形界面版支持通过设置面板修改 API Key、Base URL、模型名称和最大对话轮数，配置会自动保存到 `agent_config.json` 文件中，下次启动自动加载。
+
 ---
 
 ## 📦 依赖说明
 
-| 依赖 | 用途 |
-|------|------|
-| `openai` | 调用 LLM API（兼容 OpenAI / DeepSeek 等） |
-| `requests` | 发送 HTTP 请求获取天气数据 |
-| `tavily-python` | 联网搜索旅游景点推荐 |
-| `python-docx` | 创建和编辑 Word 文档 |
-| `Pillow` | 图片处理（打开、读取格式/尺寸/EXIF 等） |
-| `pytesseract`（可选） | OCR 文字识别引擎（方案一） |
-| `paddlepaddle` + `paddleocr`（可选） | OCR 文字识别引擎（方案二，中文效果更优） |
+| 依赖 | 用途 | 必需 |
+|------|------|:----:|
+| `openai` | 调用 LLM API（兼容 OpenAI / DeepSeek 等） | ✅ |
+| `requests` | 发送 HTTP 请求获取天气数据 | ✅ |
+| `tavily-python` | 联网搜索旅游景点推荐 | ✅ |
+| `python-docx` | 创建和编辑 Word 文档 | ✅ |
+| `Pillow` | 图片处理（打开、读取格式/尺寸/EXIF 等） | ✅ |
+| `PySide6` 或 `PyQt5` | 图形界面框架（GUI 模式需要） | ⬜ |
+| `pytesseract` | OCR 文字识别引擎（方案一） | ⬜ |
+| `paddlepaddle` + `paddleocr` | OCR 文字识别引擎（方案二，中文效果更优） | ⬜ |
 
 ---
 
