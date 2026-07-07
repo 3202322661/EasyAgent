@@ -541,5 +541,93 @@
         "required": ["file_path"]
       }
     }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "run_bash_command",
+      "description": "在项目根目录下执行指定的 bash 命令，返回标准输出和标准错误。适用于 Git 操作（提交/推送/拉取等）、运行脚本、执行测试等各类终端任务。支持用 && 连接多个命令。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "要执行的 bash 命令字符串，例如 'git add . && git commit -m \"update\" && git push' 或 'python3 test.py' 或 'pytest tests/ -v'"
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "命令执行超时时间（秒），默认 120。长时间运行的任务（如测试、推送大文件）可适当调大。"
+          }
+        },
+        "required": ["command"]
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "git_quick_commit_push",
+      "description": "Git 快捷操作：一键完成 git add .、git commit、git push。相当于依次执行 git add . && git commit -m \"<message>\" && git push origin <branch>。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "branch": {
+            "type": "string",
+            "description": "要推送的分支名称，默认为 'main'。如果是其他分支请指定，如 'master'、'dev' 等。"
+          },
+          "message": {
+            "type": "string",
+            "description": "提交信息（commit message），默认为 'auto commit'。建议填写有意义的描述。"
+          }
+        },
+        "required": []
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "run_python_script",
+      "description": "运行指定的 Python 脚本。适用于执行项目中的 .py 文件，支持传递命令行参数。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "script_path": {
+            "type": "string",
+            "description": "Python 脚本路径，可以是相对路径（相对于项目根目录）或绝对路径，例如 'scripts/data_process.py' 或 '/home/user/project/test.py'"
+          },
+          "args": {
+            "type": "string",
+            "description": "传递给脚本的命令行参数（可选），例如 '--input data.csv --output result.json'"
+          }
+        },
+        "required": ["script_path"]
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "run_tests",
+      "description": "运行 pytest 测试。适用于执行项目中 tests/ 目录下的单元测试、集成测试等。支持传递额外的 pytest 参数。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "test_path": {
+            "type": "string",
+            "description": "测试文件或目录路径，默认为 'tests/'。可指定具体文件，如 'tests/test_main.py'。"
+          },
+          "extra_args": {
+            "type": "string",
+            "description": "额外的 pytest 参数，例如 '-v'（详细输出）、'-x'（首次失败停止）、'--cov'（覆盖率报告）、'-k test_func'（按名称筛选）等。"
+          }
+        },
+        "required": []
+      }
+    }
   }
 ]
